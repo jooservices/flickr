@@ -25,7 +25,17 @@ final class OfficialMethodCoverageTest extends TestCase
             $this->assertInstanceOf(FlickrMethodDefinition::class, $registered[$method]);
             $this->assertSame($method, $registered[$method]->name);
             $this->assertSame('https://www.flickr.com/services/api/'.$method.'.html', $registered[$method]->docsUrl);
+            $this->assertNotSame('', $registered[$method]->httpMethod->value);
+            $this->assertIsBool($registered[$method]->cacheable);
         }
+    }
+
+    public function test_registry_verification_tool_passes_against_local_fixture(): void
+    {
+        exec('php '.escapeshellarg(__DIR__.'/../../tools/verify-method-registry.php'), $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode(PHP_EOL, $output));
+        $this->assertSame('Verified 224 official Flickr REST method definitions.', $output[0] ?? '');
     }
 
     public function test_root_services_expose_wrapper_methods_for_every_official_method(): void
@@ -43,6 +53,13 @@ final class OfficialMethodCoverageTest extends TestCase
             $service = $flickr->{$accessor}();
             $this->assertTrue(method_exists($service, $wrapper), "{$accessor}()->{$wrapper}() is missing for {$method}.");
         }
+    }
+
+    public function test_all_apis_example_catalog_covers_every_official_method(): void
+    {
+        require_once __DIR__.'/../../examples/all-apis.php';
+
+        $this->assertSame($this->officialMethods(), array_keys(flickr_all_api_definitions()));
     }
 
     public function test_generated_wrappers_call_expected_raw_method_and_apply_registry_auth_metadata(): void
