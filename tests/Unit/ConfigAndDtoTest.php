@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Tests\Unit;
 
+use JOOservices\Flickr\Client\FakeFlickrTransport;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
 use JOOservices\Flickr\DTO\Upload\ReplacePhotoData;
 use JOOservices\Flickr\DTO\Upload\UploadPhotoData;
 use JOOservices\Flickr\Enums\ContentType;
 use JOOservices\Flickr\Enums\HiddenStatus;
+use JOOservices\Flickr\Enums\HttpMethod;
 use JOOservices\Flickr\Enums\Privacy;
 use JOOservices\Flickr\Enums\SafetyLevel;
 use JOOservices\Flickr\Exceptions\ConfigurationException;
+use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Tests\TestCase;
 
 final class ConfigAndDtoTest extends TestCase
@@ -46,8 +49,21 @@ final class ConfigAndDtoTest extends TestCase
     public function test_replace_requires_photo_id_and_privacy_maps_to_flickr_upload_fields(): void
     {
         $this->assertSame(['is_public' => 0, 'is_friend' => 1, 'is_family' => 1], Privacy::FriendsAndFamily->uploadFields());
+        $this->assertSame(1, SafetyLevel::Safe->value);
+        $this->assertSame(1, ContentType::Photo->value);
+        $this->assertSame(1, HiddenStatus::Visible->value);
+        $this->assertSame('GET', HttpMethod::Get->value);
 
         $this->expectException(\InvalidArgumentException::class);
         ReplacePhotoData::from(['path' => '/tmp/photo.jpg', 'photoId' => '']);
+    }
+
+    public function test_package_autoloads_factory_with_fake_transport_and_has_no_laravel_surface(): void
+    {
+        $flickr = FlickrFactory::make(new FlickrConfig('key', 'secret'), transport: FakeFlickrTransport::new());
+
+        $this->assertTrue($flickr->raw()->call('flickr.test.echo')->ok);
+        $this->assertFalse(class_exists('JOOservices\\Flickr\\FlickrServiceProvider'));
+        $this->assertFalse(class_exists('JOOservices\\Flickr\\Facades\\Flickr'));
     }
 }

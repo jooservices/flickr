@@ -1,5 +1,8 @@
 # JOOservices Flickr SDK
 
+[![CI](https://github.com/jooservices/flickr/actions/workflows/ci.yml/badge.svg)](https://github.com/jooservices/flickr/actions/workflows/ci.yml)
+![PHP](https://img.shields.io/badge/PHP-%3E%3D8.5-777bb4)
+
 `jooservices/flickr` is a pure PHP, framework-agnostic Flickr SDK for PHP 8.5+. It is not a Laravel package and intentionally does not ship service providers, facades, routes, migrations, config publishing, or Artisan commands.
 
 The SDK uses `jooservices/dto` for public data objects and `jooservices/client` for HTTP transport. Official Flickr documentation remains the source of truth for API method behavior: https://www.flickr.com/services/api/
@@ -136,14 +139,34 @@ Normal API responses are mapped to `ApiResponseData`. Flickr `stat=fail` respons
 
 V1 includes `NullCache`, `Psr16Cache`, and `CacheKeyResolver`, but raw HTTP caching is disabled by default. Mutation, auth, upload, replace, and authenticated private calls are never cached by default.
 
+## XML Support
+
+JSON is the primary supported REST response format. XML parsing exists for Flickr upload/replace responses and has limited REST response parsing for compatibility, but REST XML should be treated as experimental unless a workflow has explicit tests.
+
 ## Testing
 
 Normal tests do not call Flickr:
 
 ```bash
 composer test
-composer lint
+composer lint:all
 composer check
+```
+
+Use the public fake transport to test application code without network calls:
+
+```php
+use JOOservices\Flickr\Client\FakeFlickrTransport;
+
+$transport = FakeFlickrTransport::new()->pushJson([
+    'stat' => 'ok',
+    'photos' => ['page' => 1, 'pages' => 1, 'perpage' => 1, 'total' => 0, 'photo' => []],
+]);
+
+$flickr = FlickrFactory::make(
+    config: new FlickrConfig('test-key', 'test-secret'),
+    transport: $transport,
+);
 ```
 
 Real API tests are opt-in:
@@ -159,4 +182,4 @@ composer test -- --filter RealFlickrTest
 
 ## Docs
 
-See `docs/` for architecture, getting started, user guide, examples, testing, and V2 gaps.
+See [docs/README.md](docs/README.md) for architecture, getting started, user guide, examples, testing, release readiness, and V2 gaps.

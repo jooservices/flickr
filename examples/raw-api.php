@@ -7,14 +7,18 @@ use JOOservices\Flickr\FlickrFactory;
 
 require __DIR__.'/../vendor/autoload.php';
 
-$flickr = FlickrFactory::make(FlickrConfig::from([
-    'apiKey' => $_ENV['FLICKR_API_KEY'],
-    'apiSecret' => $_ENV['FLICKR_API_SECRET'],
-]));
+$apiKey = getenv('FLICKR_API_KEY') ?: '';
+$apiSecret = getenv('FLICKR_API_SECRET') ?: '';
 
+if ($apiKey === '' || $apiSecret === '') {
+    fwrite(STDERR, 'Set FLICKR_API_KEY and FLICKR_API_SECRET.'.PHP_EOL);
+    exit(1);
+}
+
+$flickr = FlickrFactory::make(new FlickrConfig($apiKey, $apiSecret));
 $response = $flickr->raw()->call('flickr.photos.search', [
-    'text' => 'cats',
+    'text' => getenv('FLICKR_SEARCH_TEXT') ?: 'cats',
     'per_page' => 10,
 ]);
 
-var_dump($response->toArray());
+echo json_encode($response->toArray(), JSON_PRETTY_PRINT).PHP_EOL;

@@ -10,16 +10,30 @@ use JOOservices\Flickr\FlickrFactory;
 
 require __DIR__.'/../vendor/autoload.php';
 
-$flickr = FlickrFactory::make(FlickrConfig::from([
-    'apiKey' => $_ENV['FLICKR_API_KEY'],
-    'apiSecret' => $_ENV['FLICKR_API_SECRET'],
-]));
-$flickr->tokens()->put(new AccessTokenData($_ENV['FLICKR_ACCESS_TOKEN'], $_ENV['FLICKR_ACCESS_TOKEN_SECRET']));
+$apiKey = getenv('FLICKR_API_KEY') ?: '';
+$apiSecret = getenv('FLICKR_API_SECRET') ?: '';
+$accessToken = getenv('FLICKR_ACCESS_TOKEN') ?: '';
+$accessTokenSecret = getenv('FLICKR_ACCESS_TOKEN_SECRET') ?: '';
+$path = $argv[1] ?? getenv('FLICKR_UPLOAD_PATH') ?: '';
+
+if ($apiKey === '' || $apiSecret === '' || $accessToken === '' || $accessTokenSecret === '' || $path === '') {
+    fwrite(STDERR, 'Set Flickr credentials, OAuth access token, and pass a file path or set FLICKR_UPLOAD_PATH.'.PHP_EOL);
+    exit(1);
+}
+
+if (getenv('FLICKR_CONFIRM_UPLOAD') !== 'yes') {
+    fwrite(STDERR, 'Upload mutates your Flickr account. Set FLICKR_CONFIRM_UPLOAD=yes to continue.'.PHP_EOL);
+    exit(1);
+}
+
+$flickr = FlickrFactory::make(new FlickrConfig($apiKey, $apiSecret));
+$flickr->tokens()->put(new AccessTokenData($accessToken, $accessTokenSecret));
 
 $result = $flickr->uploads()->upload(UploadPhotoData::from([
-    'path' => $argv[1],
+    'path' => $path,
+    'title' => getenv('FLICKR_UPLOAD_TITLE') ?: null,
     'privacy' => Privacy::Private,
     'async' => true,
 ]));
 
-var_dump($result->toArray());
+echo json_encode($result->toArray(), JSON_PRETTY_PRINT).PHP_EOL;
