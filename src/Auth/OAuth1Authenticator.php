@@ -16,6 +16,11 @@ use JOOservices\Flickr\Support\UrlBuilder;
 
 final class OAuth1Authenticator implements FlickrAuthenticatorContract
 {
+    /**
+     * @var array<string, string>
+     */
+    private array $requestTokenSecrets = [];
+
     public function __construct(
         private FlickrConfig $config,
         private FlickrSignerContract $signer,
@@ -38,11 +43,14 @@ final class OAuth1Authenticator implements FlickrAuthenticatorContract
 
         $data = $this->parseTokenResponse($response->body);
 
-        return new RequestTokenData(
+        $requestToken = new RequestTokenData(
             oauthToken: $this->requireValue($data, 'oauth_token'),
             oauthTokenSecret: $this->requireValue($data, 'oauth_token_secret'),
             oauthCallbackConfirmed: ($data['oauth_callback_confirmed'] ?? 'false') === 'true',
         );
+        $this->requestTokenSecrets[$requestToken->oauthToken] = $requestToken->oauthTokenSecret;
+
+        return $requestToken;
     }
 
     public function authorizationUrl(RequestTokenData $requestToken, AuthPermission $permission): string
@@ -53,14 +61,20 @@ final class OAuth1Authenticator implements FlickrAuthenticatorContract
         ]);
     }
 
-    public function accessToken(string $oauthToken, string $oauthVerifier): AccessTokenData
+    public function accessToken(string $oauthToken, string $oauthVerifier, ?string $oauthTokenSecret = null): AccessTokenData
     {
         if (trim($oauthToken) === '' || trim($oauthVerifier) === '') {
             throw new AuthenticationException('OAuth token and verifier are required.');
         }
 
         $parameters = ['oauth_verifier' => $oauthVerifier];
-        $oauth = $this->signer->sign('GET', $this->config->accessTokenEndpoint, $parameters, $oauthToken);
+        $oauth = $this->signer->sign(
+            'GET',
+            $this->config->accessTokenEndpoint,
+            $parameters,
+            $oauthToken,
+            $oauthTokenSecret ?? $this->requestTokenSecrets[$oauthToken] ?? null,
+        );
         $response = $this->transport->request('GET', $this->config->accessTokenEndpoint, [
             'query' => array_merge($parameters, $oauth),
         ]);

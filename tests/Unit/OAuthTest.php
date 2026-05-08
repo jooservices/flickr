@@ -51,10 +51,21 @@ final class OAuthTest extends TestCase
         $requestToken = $auth->requestToken(AuthPermission::Write);
         $url = $auth->authorizationUrl($requestToken, AuthPermission::Write);
         $accessToken = $auth->accessToken('req', 'verifier');
+        $accessQuery = $transport->requests[1]['options']['query'];
+        $expectedAccessSignature = (new OAuth1Signer(new FlickrConfig('key', 'secret')))->sign(
+            'GET',
+            'https://www.flickr.com/services/oauth/access_token',
+            ['oauth_verifier' => 'verifier'],
+            'req',
+            'req-secret',
+            $accessQuery['oauth_nonce'],
+            (int) $accessQuery['oauth_timestamp'],
+        )['oauth_signature'];
 
         $this->assertTrue($requestToken->oauthCallbackConfirmed);
         $this->assertStringContainsString('oauth_token=req', $url);
         $this->assertStringContainsString('perms=write', $url);
+        $this->assertSame($expectedAccessSignature, $accessQuery['oauth_signature']);
         $this->assertSame('acc', $accessToken->oauthToken);
         $this->assertSame('viet', $accessToken->username);
     }
@@ -84,6 +95,25 @@ final class OAuthTest extends TestCase
             (new FileTokenStore($path))->get();
         } finally {
             @unlink($path);
+        }
+    }
+
+    public function test_file_token_store_handles_missing_and_empty_files_without_leaking_secrets(): void
+    {
+        $missing = sys_get_temp_dir().'/flickr-token-missing-'.bin2hex(random_bytes(4)).'.json';
+        $empty = sys_get_temp_dir().'/flickr-token-empty-'.bin2hex(random_bytes(4)).'.json';
+
+        $this->assertNull((new FileTokenStore($missing))->get());
+
+        file_put_contents($empty, '');
+
+        try {
+            (new FileTokenStore($empty))->get();
+            $this->fail('Empty token file should fail.');
+        } catch (TokenStorageException $exception) {
+            $this->assertStringNotContainsString('secret', $exception->getMessage());
+        } finally {
+            @unlink($empty);
         }
     }
 }

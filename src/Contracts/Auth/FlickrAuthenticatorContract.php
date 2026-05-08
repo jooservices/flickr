@@ -14,5 +14,5 @@ interface FlickrAuthenticatorContract
 
     public function authorizationUrl(RequestTokenData $requestToken, AuthPermission $permission): string;
 
-    public function accessToken(string $oauthToken, string $oauthVerifier): AccessTokenData;
+    public function accessToken(string $oauthToken, string $oauthVerifier, ?string $oauthTokenSecret = null): AccessTokenData;
 }
