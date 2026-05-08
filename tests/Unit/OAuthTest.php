@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JOOservices\Flickr\Tests\Unit;
+
+use JOOservices\Flickr\Auth\FileTokenStore;
+use JOOservices\Flickr\Auth\InMemoryTokenStore;
+use JOOservices\Flickr\Auth\OAuth1Authenticator;
+use JOOservices\Flickr\Auth\OAuth1Signer;
+use JOOservices\Flickr\Config\FlickrConfig;
+use JOOservices\Flickr\DTO\Auth\AccessTokenData;
+use JOOservices\Flickr\Enums\AuthPermission;
+use JOOservices\Flickr\Exceptions\AuthenticationException;
+use JOOservices\Flickr\Exceptions\TokenStorageException;
+use JOOservices\Flickr\Tests\Fakes\FakeTransport;
+use JOOservices\Flickr\Tests\TestCase;
+
+final class OAuthTest extends TestCase
+{
+    public function test_signer_builds_deterministic_base_string_and_signature(): void
+    {
+        $config = new FlickrConfig('key', 'secret');
+        $signer = new OAuth1Signer($config);
+        $signed = $signer->sign(
+            'GET',
+            'https://www.flickr.com/services/oauth/request_token',
+            ['oauth_callback' => 'http://www.example.com', 'weird' => 'a b&c'],
+            nonce: 'nonce',
+            timestamp: 123,
+        );
+
+        $base = $signer->signatureBaseString('GET', 'https://www.flickr.com/services/oauth/request_token', array_merge([
+            'oauth_callback' => 'http://www.example.com',
+            'weird' => 'a b&c',
+        ], array_diff_key($signed, ['oauth_signature' => true])));
+
+        $expected = base64_encode(hash_hmac('sha1', $base, 'secret&', true));
+
+        $this->assertStringStartsWith('GET&https%3A%2F%2Fwww.flickr.com%2Fservices%2Foauth%2Frequest_token&', $base);
+        $this->assertSame($expected, $signed['oauth_signature']);
+    }
+
+    public function test_authenticator_parses_tokens_and_builds_authorization_url(): void
+    {
+        $transport = new FakeTransport;
+        $transport->push('oauth_callback_confirmed=true&oauth_token=req&oauth_token_secret=req-secret');
+        $transport->push('oauth_token=acc&oauth_token_secret=acc-secret&user_nsid=1&username=viet');
+        $auth = new OAuth1Authenticator(new FlickrConfig('key', 'secret', 'https://app.test/callback'), new OAuth1Signer(new FlickrConfig('key', 'secret', 'https://app.test/callback')), $transport);
+
+        $requestToken = $auth->requestToken(AuthPermission::Write);
+        $url = $auth->authorizationUrl($requestToken, AuthPermission::Write);
+        $accessToken = $auth->accessToken('req', 'verifier');
+
+        $this->assertTrue($requestToken->oauthCallbackConfirmed);
+        $this->assertStringContainsString('oauth_token=req', $url);
+        $this->assertStringContainsString('perms=write', $url);
+        $this->assertSame('acc', $accessToken->oauthToken);
+        $this->assertSame('viet', $accessToken->username);
+    }
+
+    public function test_authenticator_rejects_missing_verifier_and_token_store_round_trip(): void
+    {
+        $store = new InMemoryTokenStore;
+        $token = new AccessTokenData('token', 'secret');
+        $store->put($token);
+        $this->assertSame($token, $store->get());
+        $store->forget();
+        $this->assertNull($store->get());
+
+        $auth = new OAuth1Authenticator(new FlickrConfig('key', 'secret'), new OAuth1Signer(new FlickrConfig('key', 'secret')), new FakeTransport);
+        $this->expectException(AuthenticationException::class);
+        $auth->accessToken('', '');
+    }
+
+    public function test_file_token_store_rejects_corrupted_json(): void
+    {
+        $path = sys_get_temp_dir().'/flickr-token-'.bin2hex(random_bytes(4)).'.json';
+        file_put_contents($path, '{bad');
+
+        $this->expectException(TokenStorageException::class);
+
+        try {
+            (new FileTokenStore($path))->get();
+        } finally {
+            @unlink($path);
+        }
+    }
+}
