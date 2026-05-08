@@ -1,0 +1,17 @@
+/vendor/
+/coverage/
+/coverage.xml
+/.phpunit.cache/
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+/vendor/
+/coverage/
+/coverage.xml
+/.phpunit.cache/
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<ruleset name="JOOservices Flickr">
+    <arg name="basepath" value="."/>
+    <arg name="colors"/>
+    <arg value="p"/>
+    <file>src</file>
+    <file>tests</file>
+    <rule ref="PSR12">
+        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+        <exclude name="PSR2.Classes.ClassDeclaration.OpenBraceNewLine"/>
+        <exclude name="PSR12.Classes.ClassInstantiation.MissingParentheses"/>
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+        <exclude name="Squiz.WhiteSpace.ScopeClosingBrace.ContentBefore"/>
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnSameLine"/>
+        <exclude name="PSR12.Operators.OperatorSpacing.NoSpaceBefore"/>
+        <exclude name="PSR12.Operators.OperatorSpacing.NoSpaceAfter"/>
+        <exclude name="Squiz.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
+        <exclude name="Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.CloseBracketLine"/>
+    </rule>
+</ruleset>
