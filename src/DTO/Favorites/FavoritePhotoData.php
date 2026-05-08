@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JOOservices\Flickr\DTO\Favorites;
+
+use JOOservices\Dto\Core\Dto;
+
+final class FavoritePhotoData extends Dto
+{
+    public function __construct(public readonly string $id, public readonly ?string $title = null) {}
+}
