@@ -56,6 +56,9 @@ Official Flickr API docs remain the source of truth: https://www.flickr.com/serv
 - [Release](04-development/04-release.md)
 - [Method Registry Maintenance](04-development/05-method-registry.md)
 - [Repository Metadata](04-development/06-repository-metadata.md)
+- [CI/CD](04-development/07-ci-cd.md)
+- [AI Contributor Workflow](04-development/08-ai-contributor-workflow.md)
+- [Secret Scanning](04-development/09-secret-scanning.md)
 
 ## Maintenance
 

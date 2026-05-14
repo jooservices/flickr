@@ -38,6 +38,29 @@ final class OfficialMethodCoverageTest extends TestCase
         $this->assertSame('Verified 224 official Flickr REST method definitions.', $output[0] ?? '');
     }
 
+    public function test_sensitive_auth_upload_and_mutation_methods_are_not_cacheable(): void
+    {
+        $registered = require __DIR__.'/../../src/Metadata/methods.php';
+
+        foreach ($registered as $method => $definition) {
+            if (str_starts_with($method, 'flickr.auth.')) {
+                $this->assertFalse($definition->cacheable, "{$method} must not be cacheable.");
+            }
+
+            if ($method === 'flickr.photos.upload.checkTickets') {
+                $this->assertFalse($definition->cacheable, "{$method} must not be cacheable.");
+            }
+
+            if ($definition->httpMethod->value === 'POST') {
+                $this->assertFalse($definition->cacheable, "{$method} mutations must not be cacheable.");
+            }
+
+            if ($definition->requiresAuth) {
+                $this->assertFalse($definition->cacheable, "{$method} authenticated calls must not be cacheable by default.");
+            }
+        }
+    }
+
     public function test_root_services_expose_wrapper_methods_for_every_official_method(): void
     {
         $flickr = FlickrFactory::make(

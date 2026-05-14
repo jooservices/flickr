@@ -70,6 +70,17 @@ REST flow:
 - Token store, file handling, upload, OAuth signing, parser, and registry changes need focused edge tests.
 - Do not commit secrets, real access tokens, or snapshots containing credentials.
 
+## Git Flow
+
+- Normal implementation work branches from the latest `develop`.
+- Open feature and fix PRs back into `develop`.
+- Release branches start from `develop` as `release/<version>`.
+- Release PRs target `master`; tags and GitHub releases are created from `master`.
+- After release or hotfix merges to `master`, merge `master` back into `develop`.
+- Do not commit directly to `master` or `develop`.
+- Do not delete unmerged branches silently.
+- Never delete protected branches: `master` and `develop`.
+
 ## Quality Commands
 
 ```bash
