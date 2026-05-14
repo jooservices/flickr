@@ -6,6 +6,8 @@ This project follows semantic versioning where practical.
 
 ## Unreleased
 
+## v1.0.0 - 2026-05-14
+
 ### Added
 
 - GitHub Actions CI workflow for Composer validation, linting, and tests.
