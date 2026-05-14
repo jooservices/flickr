@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Tests\Unit;
 
+use GuzzleHttp\Psr7\Response;
+use JOOservices\Client\Contracts\HttpClientInterface;
+use JOOservices\Client\Contracts\ResponseWrapperInterface;
 use JOOservices\Flickr\Auth\InMemoryTokenStore;
 use JOOservices\Flickr\Auth\OAuth1Signer;
 use JOOservices\Flickr\Client\FlickrClient;
 use JOOservices\Flickr\Client\FlickrResponseParser;
 use JOOservices\Flickr\Client\FlickrUploadClient;
+use JOOservices\Flickr\Client\JooClientTransport;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
 use JOOservices\Flickr\DTO\Common\RawResponseData;
@@ -19,6 +23,7 @@ use JOOservices\Flickr\Enums\CachePolicy;
 use JOOservices\Flickr\Enums\Privacy;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\InvalidResponseException;
+use JOOservices\Flickr\Exceptions\TransportException;
 use JOOservices\Flickr\Exceptions\UploadException;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Tests\Fakes\ArrayCache;
@@ -26,6 +31,8 @@ use JOOservices\Flickr\Tests\Fakes\FakeTransport;
 use JOOservices\Flickr\Tests\Fakes\SpySigner;
 use JOOservices\Flickr\Tests\Fakes\SpyTokenStore;
 use JOOservices\Flickr\Tests\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 
 final class ClientAndParserTest extends TestCase
 {
@@ -144,6 +151,47 @@ final class ClientAndParserTest extends TestCase
         $parser->parseApi(new RawResponseData(200, '{"ok"'));
     }
 
+    public function test_parser_rejects_empty_scalar_and_missing_stat_api_responses(): void
+    {
+        $parser = new FlickrResponseParser;
+
+        foreach (['', 'true', '{"photos":[]}'] as $body) {
+            try {
+                $parser->parseApi(new RawResponseData(200, $body));
+                $this->fail("Expected invalid response for body [{$body}].");
+            } catch (InvalidResponseException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    public function test_parser_maps_xml_api_success_failure_and_invalid_xml(): void
+    {
+        $parser = new FlickrResponseParser;
+
+        $success = $parser->parseApi(new RawResponseData(200, '<rsp stat="ok"><photos page="1"/></rsp>'));
+        $failure = $parser->parseApi(new RawResponseData(200, '<rsp stat="fail"><err code="100" msg="Invalid"/></rsp>'));
+
+        $this->assertTrue($success->ok);
+        $this->assertSame(['@attributes' => ['stat' => 'ok'], 'photos' => ['@attributes' => ['page' => '1']]], $success->data);
+        $this->assertFalse($failure->ok);
+        $this->assertSame(100, $failure->error?->code);
+        $this->assertSame('Invalid', $failure->error?->message);
+
+        foreach (['<rsp>', '<unknown />'] as $body) {
+            $previous = libxml_use_internal_errors(true);
+            try {
+                $parser->parseApi(new RawResponseData(200, $body));
+                $this->fail("Expected invalid XML API response for body [{$body}].");
+            } catch (InvalidResponseException) {
+                $this->addToAssertionCount(1);
+            } finally {
+                libxml_clear_errors();
+                libxml_use_internal_errors($previous);
+            }
+        }
+    }
+
     public function test_parser_maps_xml_upload_photo_and_ticket_responses(): void
     {
         $parser = new FlickrResponseParser;
@@ -153,6 +201,32 @@ final class ClientAndParserTest extends TestCase
         $this->assertSame('123', $sync->photoId);
         $this->assertSame('s', $sync->secret);
         $this->assertSame('999', $async->ticketId);
+    }
+
+    public function test_parser_maps_root_upload_responses_and_rejects_upload_errors(): void
+    {
+        $parser = new FlickrResponseParser;
+
+        $photo = $parser->parseUpload(new RawResponseData(200, '<photoid secret="s" originalsecret="o">123</photoid>'));
+        $ticket = $parser->parseUpload(new RawResponseData(200, '<ticketid>999</ticketid>'));
+
+        $this->assertSame('123', $photo->photoId);
+        $this->assertSame('s', $photo->secret);
+        $this->assertSame('o', $photo->originalSecret);
+        $this->assertSame('999', $ticket->ticketId);
+
+        foreach (['', '<rsp stat="fail"><err code="2" msg="Nope"/></rsp>', '<rsp stat="ok"/>', '<bad'] as $body) {
+            $previous = libxml_use_internal_errors(true);
+            try {
+                $parser->parseUpload(new RawResponseData(200, $body));
+                $this->fail("Expected invalid upload response for body [{$body}].");
+            } catch (InvalidResponseException) {
+                $this->addToAssertionCount(1);
+            } finally {
+                libxml_clear_errors();
+                libxml_use_internal_errors($previous);
+            }
+        }
     }
 
     public function test_upload_client_validates_file_and_builds_signed_multipart_request(): void
@@ -200,6 +274,85 @@ final class ClientAndParserTest extends TestCase
 
         $this->expectException(UploadException::class);
         $client->replace(new ReplacePhotoData('/missing/photo.jpg', '1'));
+    }
+
+    public function test_joo_client_transport_maps_psr_responses_and_wraps_failures(): void
+    {
+        $client = new class implements HttpClientInterface
+        {
+            public bool $fail = false;
+
+            public function get(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->request('GET', $uri, $options);
+            }
+
+            public function post(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->request('POST', $uri, $options);
+            }
+
+            public function put(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->request('PUT', $uri, $options);
+            }
+
+            public function patch(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->request('PATCH', $uri, $options);
+            }
+
+            public function delete(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->request('DELETE', $uri, $options);
+            }
+
+            public function request(string $method, string $uri, array $options = []): ResponseWrapperInterface
+            {
+                if ($this->fail) {
+                    throw new RuntimeException('Network failed.');
+                }
+
+                return new class implements ResponseWrapperInterface
+                {
+                    public function status(): int
+                    {
+                        return 201;
+                    }
+
+                    public function header(string $name): ?string
+                    {
+                        return $name === 'X-Test' ? 'yes' : null;
+                    }
+
+                    public function json(): array
+                    {
+                        return ['stat' => 'ok'];
+                    }
+
+                    public function toPsrResponse(): ResponseInterface
+                    {
+                        return new Response(201, ['X-Test' => 'yes'], 'body');
+                    }
+
+                    public function toDto(string $dtoClass): object
+                    {
+                        return new $dtoClass;
+                    }
+                };
+            }
+        };
+        $transport = new JooClientTransport($client);
+
+        $response = $transport->request('GET', 'https://example.test', ['query' => ['a' => 'b']]);
+
+        $this->assertSame(201, $response->statusCode);
+        $this->assertSame('body', $response->body);
+        $this->assertSame(['yes'], $response->headers['X-Test']);
+
+        $client->fail = true;
+        $this->expectException(TransportException::class);
+        $transport->request('GET', 'https://example.test');
     }
 
     private function client(FakeTransport $transport, ?InMemoryTokenStore $tokens = null, ?ArrayCache $cache = null): FlickrClient
