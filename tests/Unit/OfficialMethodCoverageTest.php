@@ -6,10 +6,15 @@ namespace JOOservices\Flickr\Tests\Unit;
 
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
+use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
+use JOOservices\Flickr\DTO\Photosets\CreatePhotosetData;
+use JOOservices\Flickr\Enums\HttpMethod;
 use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Metadata\FlickrMethodDefinition;
+use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Tests\Fakes\FakeTransport;
 use JOOservices\Flickr\Tests\TestCase;
+use ReflectionNamedType;
 
 final class OfficialMethodCoverageTest extends TestCase
 {
@@ -38,6 +43,36 @@ final class OfficialMethodCoverageTest extends TestCase
         $this->assertSame('Verified 224 official Flickr REST method definitions.', $output[0] ?? '');
     }
 
+    public function test_sensitive_auth_upload_and_mutation_methods_are_not_cacheable(): void
+    {
+        $registered = require __DIR__.'/../../src/Metadata/methods.php';
+
+        foreach ($registered as $method => $definition) {
+            if (str_starts_with($method, 'flickr.auth.')) {
+                $this->assertFalse($definition->cacheable, "{$method} must not be cacheable.");
+            }
+
+            if ($method === 'flickr.photos.upload.checkTickets') {
+                $this->assertFalse($definition->cacheable, "{$method} must not be cacheable.");
+            }
+
+            if ($definition->httpMethod === HttpMethod::Post) {
+                $this->assertFalse($definition->cacheable, "{$method} mutations must not be cacheable.");
+            }
+
+            if ($definition->authPermission !== null) {
+                $this->assertFalse($definition->cacheable, "{$method} permissioned calls must not be cacheable.");
+            }
+
+            if ($definition->requiresAuth) {
+                $this->assertFalse($definition->cacheable, "{$method} authenticated calls must not be cacheable by default.");
+            }
+        }
+
+        $unknown = FlickrMethodRegistry::default()->find('flickr.future.method');
+        $this->assertFalse($unknown->cacheable);
+    }
+
     public function test_root_services_expose_wrapper_methods_for_every_official_method(): void
     {
         $flickr = FlickrFactory::make(
@@ -53,6 +88,31 @@ final class OfficialMethodCoverageTest extends TestCase
             $service = $flickr->{$accessor}();
             $this->assertTrue(method_exists($service, $wrapper), "{$accessor}()->{$wrapper}() is missing for {$method}.");
         }
+    }
+
+    public function test_every_official_wrapper_dispatches_to_expected_raw_method(): void
+    {
+        $transport = new FakeTransport;
+        $flickr = FlickrFactory::make(
+            new FlickrConfig('key', 'secret'),
+            transport: $transport,
+        );
+        $flickr->tokens()->put(new AccessTokenData('token', 'token-secret'));
+
+        foreach ($this->officialMethods() as $index => $method) {
+            $accessor = $this->accessor($this->categoryOf($method));
+            $wrapper = $this->wrapperMethod($method);
+            $service = $flickr->{$accessor}();
+
+            $service->{$wrapper}(...$this->argumentsFor($service, $wrapper));
+
+            $request = $transport->requests[$index];
+            $parameters = $request['options']['query'] ?? $request['options']['form_params'] ?? [];
+
+            $this->assertSame($method, $parameters['method'] ?? null, "{$accessor}()->{$wrapper}() dispatched the wrong raw method.");
+        }
+
+        $this->assertCount(count($this->officialMethods()), $transport->requests);
     }
 
     public function test_all_apis_example_catalog_covers_every_official_method(): void
@@ -125,5 +185,38 @@ final class OfficialMethodCoverageTest extends TestCase
         $parts = explode('.', $method);
 
         return end($parts);
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function argumentsFor(object $service, string $method): array
+    {
+        $reflection = new \ReflectionMethod($service, $method);
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            if ($parameter->isOptional()) {
+                continue;
+            }
+
+            $type = $parameter->getType();
+            $typeName = $type instanceof ReflectionNamedType ? $type->getName() : null;
+
+            $arguments[] = match ($typeName) {
+                'array' => $parameter->getName() === 'tags' ? ['tag-one', 'tag-two'] : ['sample' => 'value'],
+                'string' => str_contains(strtolower($parameter->getName()), 'title') ? 'Example title' : '123',
+                SearchPhotosData::class => new SearchPhotosData(text: 'sunset'),
+                CreatePhotosetData::class => new CreatePhotosetData('Example set', '123', 'Example description'),
+                default => throw new \LogicException(sprintf(
+                    'No test argument is defined for %s::%s parameter $%s.',
+                    $reflection->getDeclaringClass()->getName(),
+                    $method,
+                    $parameter->getName(),
+                )),
+            };
+        }
+
+        return $arguments;
     }
 }

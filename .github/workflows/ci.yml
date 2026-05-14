@@ -3,12 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - main
       - master
       - develop
   pull_request:
     branches:
-      - main
       - master
       - develop
 
@@ -47,8 +45,5 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Run lint suite
-        run: composer lint:all
-
-      - name: Run tests
-        run: composer test
+      - name: Run project checks
+        run: composer check

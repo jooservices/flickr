@@ -2,6 +2,8 @@
 
 Use this checklist before tagging a release.
 
+Normal implementation branches start from `develop` and open PRs back to `develop`. Release branches start from `develop` as `release/<version>` and open PRs to `master`. Tag and publish releases from `master`, then merge `master` back into `develop`.
+
 ## Preflight
 
 ```bash
@@ -51,6 +53,8 @@ Do not create tags or GitHub releases from automation unless explicitly authoriz
 Manual release flow:
 
 ```bash
+git checkout master
+git pull origin master
 git tag vX.Y.Z
 git push origin vX.Y.Z
 ```

@@ -6,6 +6,7 @@ namespace JOOservices\Flickr\Tests\Unit;
 
 use JOOservices\Flickr\Auth\FileTokenStore;
 use JOOservices\Flickr\Auth\InMemoryTokenStore;
+use JOOservices\Flickr\Auth\NullTokenStore;
 use JOOservices\Flickr\Auth\OAuth1Authenticator;
 use JOOservices\Flickr\Auth\OAuth1Signer;
 use JOOservices\Flickr\Config\FlickrConfig;
@@ -96,6 +97,51 @@ final class OAuthTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function test_file_token_store_round_trips_and_forgets_tokens(): void
+    {
+        $path = sys_get_temp_dir().'/flickr-token-round-trip-'.bin2hex(random_bytes(4)).'.json';
+        $store = new FileTokenStore($path);
+        $token = new AccessTokenData('token', 'secret', 'user', 'username');
+
+        try {
+            $store->put($token);
+
+            $this->assertFileExists($path);
+            $this->assertEquals($token, $store->get());
+
+            $store->forget();
+            $this->assertFileDoesNotExist($path);
+            $store->forget();
+            $this->assertFileDoesNotExist($path);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_file_token_store_rejects_non_object_json(): void
+    {
+        $path = sys_get_temp_dir().'/flickr-token-scalar-'.bin2hex(random_bytes(4)).'.json';
+        file_put_contents($path, '"token"');
+
+        $this->expectException(TokenStorageException::class);
+
+        try {
+            (new FileTokenStore($path))->get();
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_null_token_store_discards_tokens(): void
+    {
+        $store = new NullTokenStore;
+
+        $this->assertNull($store->get());
+        $store->put(new AccessTokenData('token', 'secret'));
+        $store->forget();
+        $this->assertNull($store->get());
     }
 
     public function test_file_token_store_handles_missing_and_empty_files_without_leaking_secrets(): void

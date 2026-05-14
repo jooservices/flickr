@@ -12,6 +12,7 @@ use JOOservices\Flickr\Client\FlickrUploadClient;
 use JOOservices\Flickr\Client\JooClientTransport;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\Contracts\Auth\FlickrTokenStoreContract;
+use JOOservices\Flickr\Contracts\Cache\FlickrCacheContract;
 use JOOservices\Flickr\Contracts\Client\FlickrTransportContract;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Services\ActivityService;
@@ -63,12 +64,15 @@ final class FlickrFactory
         FlickrConfig $config,
         ?FlickrTokenStoreContract $tokenStore = null,
         ?FlickrTransportContract $transport = null,
+        ?FlickrCacheContract $cache = null,
     ): Flickr {
         $transport ??= JooClientTransport::fromConfig($config);
         $tokenStore ??= new InMemoryTokenStore;
         $registry = FlickrMethodRegistry::default();
         $signer = new OAuth1Signer($config);
-        $client = new FlickrClient($config, $transport, $signer, $tokenStore, $registry);
+        $client = $cache === null
+            ? new FlickrClient($config, $transport, $signer, $tokenStore, $registry)
+            : new FlickrClient($config, $transport, $signer, $tokenStore, $registry, cache: $cache);
         $uploadClient = new FlickrUploadClient($config, $transport, $signer, $tokenStore);
         $raw = new RawApiService($client);
 

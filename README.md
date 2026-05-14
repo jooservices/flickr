@@ -47,6 +47,19 @@ $response = $flickr->photos()->search(SearchPhotosData::from([
 
 `flickr.photos.search` can run unauthenticated for public photos. Private and semi-private results require OAuth read permission.
 
+For lazy public search pagination, use `searchPages()`:
+
+```php
+use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
+
+foreach ($flickr->photos()->searchPages(
+    SearchPhotosData::from(['text' => 'sunset']),
+    new PaginationOptionsData(maxPages: 3, perPage: 50),
+) as $page) {
+    // $page is ApiResponseData
+}
+```
+
 ## Raw API Fallback
 
 ```php
@@ -129,7 +142,7 @@ $result = $flickr->uploads()->replace(ReplacePhotoData::from([
 ]));
 ```
 
-Upload and replace require OAuth write permission. Delete requires delete permission.
+Upload and replace require OAuth write permission. Delete requires delete permission. The SDK builds multipart requests with a readable file stream and closes that handle after the transport request completes.
 
 ## Error Handling
 
@@ -137,7 +150,18 @@ Normal API responses are mapped to `ApiResponseData`. Flickr `stat=fail` respons
 
 ## Cache
 
-V1 includes `NullCache`, `Psr16Cache`, and `CacheKeyResolver`, but raw HTTP caching is disabled by default. Mutation, auth, upload, replace, and authenticated private calls are never cached by default.
+V1 includes `NullCache`, `Psr16Cache`, and `CacheKeyResolver`. Runtime caching is disabled by default because `FlickrFactory` uses `NullCache` unless a cache adapter is passed.
+
+When a cache adapter is passed, only public cacheable GET REST calls can be cached. Mutation, auth, OAuth, upload, replace, upload ticket polling, authenticated options, auth-required methods, POST methods, and Flickr `stat=fail` responses are never cached by default.
+
+```php
+use JOOservices\Flickr\Cache\Psr16Cache;
+
+$flickr = FlickrFactory::make(
+    config: $config,
+    cache: new Psr16Cache($psr16Cache),
+);
+```
 
 ## XML Support
 

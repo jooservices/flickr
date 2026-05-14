@@ -5,20 +5,20 @@ GitHub About metadata should identify this as a framework-agnostic PHP Flickr SD
 Suggested description:
 
 ```text
-Framework-agnostic PHP 8.5+ SDK for Flickr API, OAuth 1.0a, upload, replace, and DTO-first workflows.
+Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, and DTO-first workflows.
 ```
 
 Suggested topics:
 
 ```text
-php php85 flickr flickr-api sdk oauth oauth1 upload dto jooservices
+php php85 sdk flickr flickr-api oauth oauth1 upload dto jooservices framework-agnostic api-client
 ```
 
 Manual update command:
 
 ```bash
 gh repo edit jooservices/flickr \
-  --description "Framework-agnostic PHP 8.5+ SDK for Flickr API, OAuth 1.0a, upload, replace, and DTO-first workflows." \
+  --description "Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, and DTO-first workflows." \
   --add-topic php \
   --add-topic php85 \
   --add-topic flickr \
@@ -28,7 +28,9 @@ gh repo edit jooservices/flickr \
   --add-topic oauth1 \
   --add-topic upload \
   --add-topic dto \
-  --add-topic jooservices
+  --add-topic jooservices \
+  --add-topic framework-agnostic \
+  --add-topic api-client
 ```
 
 Do not set a homepage unless there is a real docs site or Packagist page.
