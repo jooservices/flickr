@@ -74,9 +74,15 @@ final class FlickrUploadClient implements FlickrUploadClientContract
             $token->oauthTokenSecret,
         ));
 
-        $raw = $this->transport->request('POST', $endpoint, [
-            'multipart' => $this->multipart->build($path, $parameters),
-        ]);
+        $multipart = $this->multipart->build($path, $parameters);
+
+        try {
+            $raw = $this->transport->request('POST', $endpoint, [
+                'multipart' => $multipart,
+            ]);
+        } finally {
+            $this->multipart->close($multipart);
+        }
 
         return $this->parser->parseUpload($raw);
     }

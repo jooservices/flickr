@@ -12,4 +12,14 @@ V1 ships cache contracts and adapters:
 - `Psr16Cache`
 - `CacheKeyResolver`
 
-Raw HTTP caching is disabled by default. Mutation, auth, upload, replace, and authenticated private workflows must not be cached by default.
+Raw HTTP caching is disabled by default. `FlickrFactory` uses `NullCache` unless a cache adapter is passed.
+
+When a cache adapter is passed, caching is limited to public cacheable GET REST calls. Cache bypasses apply to:
+
+- auth and OAuth methods
+- upload, replace, and upload ticket polling
+- POST, write, delete, and mutation methods
+- auth-required methods and request options with `authenticated=true`
+- Flickr `stat=fail` responses
+
+Use `RequestOptionsData(cache: CachePolicy::Disabled)` to bypass cache for an individual call.

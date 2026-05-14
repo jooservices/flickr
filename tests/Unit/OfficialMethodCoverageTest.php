@@ -8,6 +8,7 @@ use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
 use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Metadata\FlickrMethodDefinition;
+use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Tests\Fakes\FakeTransport;
 use JOOservices\Flickr\Tests\TestCase;
 
@@ -55,10 +56,17 @@ final class OfficialMethodCoverageTest extends TestCase
                 $this->assertFalse($definition->cacheable, "{$method} mutations must not be cacheable.");
             }
 
+            if ($definition->authPermission !== null) {
+                $this->assertFalse($definition->cacheable, "{$method} permissioned calls must not be cacheable.");
+            }
+
             if ($definition->requiresAuth) {
                 $this->assertFalse($definition->cacheable, "{$method} authenticated calls must not be cacheable by default.");
             }
         }
+
+        $unknown = FlickrMethodRegistry::default()->find('flickr.future.method');
+        $this->assertFalse($unknown->cacheable);
     }
 
     public function test_root_services_expose_wrapper_methods_for_every_official_method(): void

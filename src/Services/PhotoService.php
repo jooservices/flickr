@@ -7,6 +7,8 @@ namespace JOOservices\Flickr\Services;
 use InvalidArgumentException;
 use JOOservices\Flickr\Contracts\Services\PhotoServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
+use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
 
 final class PhotoService extends AbstractRawService implements PhotoServiceContract
@@ -158,17 +160,68 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
 
     public function search(SearchPhotosData $data): ApiResponseData
     {
-        return $this->callRaw('flickr.photos.search', array_merge($data->extraParameters, [
+        return $this->callRaw('flickr.photos.search', $this->searchParameters($data));
+    }
+
+    /**
+     * @return iterable<ApiResponseData>
+     */
+    public function searchPages(
+        SearchPhotosData $data,
+        ?PaginationOptionsData $pagination = null,
+        ?RequestOptionsData $requestOptions = null,
+    ): iterable {
+        $pagination ??= new PaginationOptionsData;
+        $page = $pagination->startPage;
+        $pagesRead = 0;
+
+        while ($pagination->maxPages === null || $pagesRead < $pagination->maxPages) {
+            $parameters = $this->searchParameters($data, $page, $pagination->perPage);
+            $response = $this->raw->call('flickr.photos.search', $parameters, $requestOptions);
+
+            yield $response;
+
+            $pagesRead++;
+            $items = $this->photoItems($response);
+
+            if ($pagination->stopWhenEmpty && $items === []) {
+                break;
+            }
+
+            if ($response->pagination === null || $page >= $response->pagination->pages) {
+                break;
+            }
+
+            $page++;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function searchParameters(SearchPhotosData $data, ?int $page = null, ?int $perPage = null): array
+    {
+        return array_merge($data->extraParameters, [
             'text' => $data->text,
             'tags' => $data->tags,
             'user_id' => $data->userId,
             'extras' => $data->extras,
-            'page' => $data->page,
-            'per_page' => $data->perPage,
+            'page' => $page ?? $data->page,
+            'per_page' => $perPage ?? $data->perPage,
             'sort' => $data->sort,
             'tag_mode' => $data->tagMode,
             'safe_search' => $data->safeSearch,
-        ]));
+        ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function photoItems(ApiResponseData $response): array
+    {
+        $photos = $response->data['photos']['photo'] ?? null;
+
+        return is_array($photos) ? array_values($photos) : [];
     }
 
     /**

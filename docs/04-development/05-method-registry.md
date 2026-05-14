@@ -45,4 +45,4 @@ php tools/verify-method-registry.php
 vendor/bin/phpunit --filter OfficialMethodCoverageTest
 ```
 
-Cache policy must be conservative. Auth methods, upload ticket checks, authenticated calls, and mutation/write/delete methods must not be cacheable by default.
+Cache policy must be conservative. Auth methods, OAuth methods, upload ticket checks, authenticated calls, and mutation/write/delete methods must not be cacheable by default. This includes methods whose name starts with `add`, `edit`, `delete`, `remove`, `set`, `create`, `join`, `leave`, `post`, `approve`, `reject`, `subscribe`, `unsubscribe`, `rotate`, `correctLocation`, or `batchCorrectLocation`, plus any POST or permissioned method.
