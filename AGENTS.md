@@ -70,6 +70,27 @@ REST flow:
 - Token store, file handling, upload, OAuth signing, parser, and registry changes need focused edge tests.
 - Do not commit secrets, real access tokens, or snapshots containing credentials.
 
+## Performance Rules
+
+- Cache safety comes before cache features.
+- Never cache auth, OAuth, mutation, private authenticated, upload, replace, or upload ticket workflows.
+- Optional REST caching must stay limited to public cacheable GET calls and must be disabled by default unless a cache adapter is passed.
+- Do not add concurrency unless the current transport architecture clearly supports it and tests prove the behavior.
+- Prefer lazy pagination helpers over loading all pages into memory.
+- Upload and replace should stream files where possible and close file handles after transport handoff.
+- Benchmark only when it would produce meaningful evidence for a real performance decision.
+
+## Git Flow
+
+- Normal implementation work branches from the latest `develop`.
+- Open feature and fix PRs back into `develop`.
+- Release branches start from `develop` as `release/<version>`.
+- Release PRs target `master`; tags and GitHub releases are created from `master`.
+- After release or hotfix merges to `master`, merge `master` back into `develop`.
+- Do not commit directly to `master` or `develop`.
+- Do not delete unmerged branches silently.
+- Never delete protected branches: `master` and `develop`.
+
 ## Quality Commands
 
 ```bash

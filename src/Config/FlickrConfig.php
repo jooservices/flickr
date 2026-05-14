@@ -24,6 +24,7 @@ final class FlickrConfig extends Dto
         public int $timeoutSeconds = 30,
         public int $retryTimes = 0,
         public string $userAgent = 'JOOservices Flickr SDK/1.0',
+        public int $publicCacheTtlSeconds = 300,
     ) {
         if (trim($this->apiKey) === '') {
             throw new ConfigurationException('Flickr API key is required.');
@@ -39,6 +40,10 @@ final class FlickrConfig extends Dto
 
         if ($this->retryTimes < 0) {
             throw new ConfigurationException('Retry times cannot be negative.');
+        }
+
+        if ($this->publicCacheTtlSeconds < 1) {
+            throw new ConfigurationException('Public cache TTL must be at least 1 second.');
         }
     }
 }

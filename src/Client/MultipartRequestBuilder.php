@@ -26,4 +26,16 @@ final class MultipartRequestBuilder
 
         return $multipart;
     }
+
+    /**
+     * @param  list<array{name: string, contents: mixed, filename?: string}>  $multipart
+     */
+    public function close(array $multipart): void
+    {
+        foreach ($multipart as $part) {
+            if (is_resource($part['contents'])) {
+                fclose($part['contents']);
+            }
+        }
+    }
 }

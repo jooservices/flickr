@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace JOOservices\Flickr\Tests\Unit;
 
 use JOOservices\Flickr\Contracts\Client\FlickrUploadClientContract;
+use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
+use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Common\PaginationData;
+use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
+use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
 use JOOservices\Flickr\DTO\Photosets\CreatePhotosetData;
 use JOOservices\Flickr\DTO\Upload\ReplacePhotoData;
@@ -62,6 +67,81 @@ final class ServiceTest extends TestCase
         $upload->checkTickets([' 1 ', '2']);
         $this->assertSame('flickr.photos.upload.checkTickets', $raw->lastCall()['method']);
         $this->assertSame(['1', '2'], $raw->lastCall()['parameters']['tickets']);
+    }
+
+    public function test_photo_search_pages_yields_lazily_and_stops_at_total_pages(): void
+    {
+        $raw = new class implements RawApiServiceContract
+        {
+            /**
+             * @var list<array{method: string, parameters: array<string, mixed>, options: ?RequestOptionsData}>
+             */
+            public array $calls = [];
+
+            public function call(string $method, array $parameters = [], ?RequestOptionsData $options = null): ApiResponseData
+            {
+                $this->calls[] = compact('method', 'parameters', 'options');
+                $page = (int) $parameters['page'];
+
+                return new ApiResponseData(
+                    ok: true,
+                    data: ['photos' => ['photo' => [['id' => (string) $page]]]],
+                    pagination: new PaginationData($page, 2, (int) $parameters['per_page'], 2),
+                );
+            }
+        };
+        $photos = new PhotoService($raw);
+
+        $pages = $photos->searchPages(
+            SearchPhotosData::from(['text' => 'sunset', 'perPage' => 50]),
+            new PaginationOptionsData(perPage: 25),
+            new RequestOptionsData(cacheTtl: 60),
+        );
+
+        $this->assertCount(0, $raw->calls);
+        $collected = iterator_to_array($pages);
+
+        $this->assertCount(2, $collected);
+        $this->assertSame(1, $raw->calls[0]['parameters']['page']);
+        $this->assertSame(25, $raw->calls[0]['parameters']['per_page']);
+        $this->assertSame(2, $raw->calls[1]['parameters']['page']);
+        $this->assertSame(60, $raw->calls[0]['options']?->cacheTtl);
+    }
+
+    public function test_photo_search_pages_respects_max_pages_and_empty_stop(): void
+    {
+        $raw = new class implements RawApiServiceContract
+        {
+            /**
+             * @var list<array{method: string, parameters: array<string, mixed>, options: ?RequestOptionsData}>
+             */
+            public array $calls = [];
+
+            public function call(string $method, array $parameters = [], ?RequestOptionsData $options = null): ApiResponseData
+            {
+                $this->calls[] = compact('method', 'parameters', 'options');
+
+                return new ApiResponseData(
+                    ok: true,
+                    data: ['photos' => ['photo' => []]],
+                    pagination: new PaginationData((int) $parameters['page'], 5, (int) $parameters['per_page'], 0),
+                );
+            }
+        };
+        $photos = new PhotoService($raw);
+
+        $emptyStop = iterator_to_array($photos->searchPages(
+            new SearchPhotosData,
+            new PaginationOptionsData(maxPages: 3),
+        ));
+        $this->assertCount(1, $emptyStop);
+
+        $continueEmpty = iterator_to_array($photos->searchPages(
+            new SearchPhotosData,
+            new PaginationOptionsData(maxPages: 2, stopWhenEmpty: false),
+        ));
+        $this->assertCount(2, $continueEmpty);
+        $this->assertCount(3, $raw->calls);
     }
 
     public function test_services_reject_invalid_inputs(): void

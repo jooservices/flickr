@@ -6,9 +6,34 @@ namespace JOOservices\Flickr\Tests\Unit;
 
 use JOOservices\Flickr\Client\FakeFlickrTransport;
 use JOOservices\Flickr\Config\FlickrConfig;
+use JOOservices\Flickr\DTO\Auth\AuthorizationUrlData;
+use JOOservices\Flickr\DTO\Auth\AuthorizedUserData;
+use JOOservices\Flickr\DTO\Auth\OAuthConsumerData;
+use JOOservices\Flickr\DTO\Auth\RequestTokenData;
+use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
+use JOOservices\Flickr\DTO\Favorites\FavoritePhotoData;
+use JOOservices\Flickr\DTO\Galleries\GalleryData;
+use JOOservices\Flickr\DTO\Galleries\GalleryPhotoData;
+use JOOservices\Flickr\DTO\Groups\GroupData;
+use JOOservices\Flickr\DTO\Groups\GroupPoolData;
+use JOOservices\Flickr\DTO\People\PersonData;
+use JOOservices\Flickr\DTO\People\UploadStatusData;
+use JOOservices\Flickr\DTO\Photos\PhotoData;
+use JOOservices\Flickr\DTO\Photos\PhotoExifData;
+use JOOservices\Flickr\DTO\Photos\PhotoInfoData;
+use JOOservices\Flickr\DTO\Photos\PhotoMetadataData;
+use JOOservices\Flickr\DTO\Photos\PhotoPermissionData;
+use JOOservices\Flickr\DTO\Photos\PhotoSizeData;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
+use JOOservices\Flickr\DTO\Photosets\CreatePhotosetData;
+use JOOservices\Flickr\DTO\Photosets\PhotosetData;
+use JOOservices\Flickr\DTO\Photosets\PhotosetPhotoData;
+use JOOservices\Flickr\DTO\Tags\MachineTagData;
+use JOOservices\Flickr\DTO\Tags\TagData;
 use JOOservices\Flickr\DTO\Upload\ReplacePhotoData;
 use JOOservices\Flickr\DTO\Upload\UploadPhotoData;
+use JOOservices\Flickr\DTO\Upload\UploadTicketData;
+use JOOservices\Flickr\Enums\AuthPermission;
 use JOOservices\Flickr\Enums\ContentType;
 use JOOservices\Flickr\Enums\HiddenStatus;
 use JOOservices\Flickr\Enums\HttpMethod;
@@ -65,5 +90,36 @@ final class ConfigAndDtoTest extends TestCase
         $this->assertTrue($flickr->raw()->call('flickr.test.echo')->ok);
         $this->assertFalse(class_exists('JOOservices\\Flickr\\FlickrServiceProvider'));
         $this->assertFalse(class_exists('JOOservices\\Flickr\\Facades\\Flickr'));
+    }
+
+    public function test_public_dto_shapes_are_constructible(): void
+    {
+        $dtos = [
+            new AuthorizationUrlData(new RequestTokenData('request-token', 'request-secret'), AuthPermission::Read),
+            new AuthorizedUserData('1', 'username', 'Full Name'),
+            new OAuthConsumerData('key', 'secret', 'https://example.test/callback'),
+            new PaginationOptionsData(startPage: 2, perPage: 10, maxPages: 3, stopWhenEmpty: false),
+            new FavoritePhotoData('1', 'owner'),
+            new GalleryData('gallery-id', 'Gallery'),
+            new GalleryPhotoData('1', 'Title'),
+            new GroupData('group-id', 'Group'),
+            new GroupPoolData(['id' => '1', 'title' => 'Title']),
+            new PersonData('nsid', ['username' => 'username']),
+            new UploadStatusData(['is_pro' => true, 'used' => 10, 'max' => 20]),
+            new PhotoData('1', 'Title', 'owner'),
+            new PhotoExifData(['make' => 'Make', 'model' => 'Model']),
+            new PhotoInfoData('1', ['title' => 'Title']),
+            new PhotoMetadataData(title: 'Title'),
+            new PhotoPermissionData(isPublic: true, isFriend: false, isFamily: false),
+            new PhotoSizeData('Large', 'https://example.test/photo.jpg', 640, 480),
+            new CreatePhotosetData('Set', '1'),
+            new PhotosetData('set-id', 'Title'),
+            new PhotosetPhotoData('1', 'Title'),
+            new MachineTagData('namespace', 'predicate', 'value'),
+            new TagData('tag'),
+            new UploadTicketData('ticket-id', complete: false),
+        ];
+
+        $this->assertCount(23, $dtos);
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JOOservices\Flickr\Contracts\Services;
 
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
+use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
 
 interface PhotoServiceContract
@@ -95,6 +97,15 @@ interface PhotoServiceContract
     public function removeTag(string $tagId): ApiResponseData;
 
     public function search(SearchPhotosData $data): ApiResponseData;
+
+    /**
+     * @return iterable<ApiResponseData>
+     */
+    public function searchPages(
+        SearchPhotosData $data,
+        ?PaginationOptionsData $pagination = null,
+        ?RequestOptionsData $requestOptions = null,
+    ): iterable;
 
     /**
      * @param  array<string, mixed>  $parameters
