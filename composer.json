@@ -22,8 +22,8 @@
     },
     "require": {
         "php": ">=8.5",
-        "jooservices/client": "^1.2",
-        "jooservices/dto": "^1.0",
+        "jooservices/client": "^1.4",
+        "jooservices/dto": "^1.2",
         "psr/simple-cache": "^3.0"
     },
     "require-dev": {
@@ -59,6 +59,10 @@
         "lint:phpcs": "phpcs --standard=phpcs.xml",
         "lint:phpstan": "XDEBUG_MODE=off phpstan analyse --configuration=phpstan.neon --memory-limit=512M --debug",
         "lint:phpmd": "php -d error_reporting=6143 vendor/bin/phpmd src text phpmd.xml",
+        "verify:registry": "php tools/verify-method-registry.php",
+        "verify:api-index": "php tools/verify-api-index.php",
+        "generate:api-index": "php tools/generate-api-index.php",
+        "security:audit": "composer audit",
         "lint": [
             "@lint:pint",
             "@lint:phpcs",
@@ -67,7 +71,8 @@
         "lint:all": [
             "@lint",
             "@lint:phpmd",
-            "@lint:cs"
+            "@lint:cs",
+            "@security:audit"
         ],
         "lint:fix": [
             "@lint:pint:fix",
@@ -75,10 +80,14 @@
         ],
         "check": [
             "@lint:all",
+            "@verify:registry",
+            "@verify:api-index",
             "@test"
         ],
         "ci": [
             "@lint:all",
+            "@verify:registry",
+            "@verify:api-index",
             "@test:coverage"
         ],
         "post-install-cmd": "captainhook install --force --skip-existing",

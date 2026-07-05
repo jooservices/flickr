@@ -6,6 +6,9 @@ namespace JOOservices\Flickr\Metadata;
 
 use JOOservices\Flickr\Enums\HttpMethod;
 
+/**
+ * @internal
+ */
 final class FlickrMethodRegistry
 {
     /**
@@ -23,6 +26,7 @@ final class FlickrMethodRegistry
 
     public function find(string $method): FlickrMethodDefinition
     {
+        // Unknown methods intentionally receive permissive defaults so raw fallback keeps working.
         return $this->methods[$method] ?? new FlickrMethodDefinition(
             name: $method,
             requiresAuth: false,

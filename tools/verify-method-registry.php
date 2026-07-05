@@ -46,6 +46,29 @@ foreach ($registered as $method => $definition) {
     }
 }
 
+$serviceMethods = [];
+$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__.'/../src/Services'));
+
+foreach ($iterator as $file) {
+    if (! $file->isFile() || $file->getExtension() !== 'php') {
+        continue;
+    }
+
+    $contents = (string) file_get_contents($file->getPathname());
+
+    if (preg_match_all("/(?:callRaw|->call)\\(\\s*'(flickr\\.[^']+)'/", $contents, $matches) !== false) {
+        foreach ($matches[1] as $method) {
+            $serviceMethods[$method] = true;
+        }
+    }
+}
+
+foreach (array_keys($serviceMethods) as $method) {
+    if (! isset($registered[$method])) {
+        $errors[] = "Service wrapper references unregistered method {$method}.";
+    }
+}
+
 if ($errors !== []) {
     foreach ($errors as $error) {
         fwrite(STDERR, $error.PHP_EOL);

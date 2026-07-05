@@ -7,6 +7,9 @@ namespace JOOservices\Flickr\Metadata;
 use JOOservices\Flickr\Enums\AuthPermission;
 use JOOservices\Flickr\Enums\HttpMethod;
 
+/**
+ * @internal
+ */
 final class FlickrMethodDefinition
 {
     public function __construct(
@@ -16,5 +19,7 @@ final class FlickrMethodDefinition
         public bool $cacheable = false,
         public HttpMethod $httpMethod = HttpMethod::Get,
         public ?string $docsUrl = null,
+        public bool $deprecated = false,
+        public ?string $availabilityNote = null,
     ) {}
 }

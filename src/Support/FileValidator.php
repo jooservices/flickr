@@ -6,6 +6,9 @@ namespace JOOservices\Flickr\Support;
 
 use JOOservices\Flickr\Exceptions\UploadException;
 
+/**
+ * @internal
+ */
 final class FileValidator
 {
     public function validateReadableFile(string $path): void

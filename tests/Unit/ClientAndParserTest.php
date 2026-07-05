@@ -21,8 +21,11 @@ use JOOservices\Flickr\DTO\Upload\ReplacePhotoData;
 use JOOservices\Flickr\DTO\Upload\UploadPhotoData;
 use JOOservices\Flickr\Enums\CachePolicy;
 use JOOservices\Flickr\Enums\Privacy;
+use JOOservices\Flickr\Exceptions\ApiException;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
+use JOOservices\Flickr\Exceptions\AuthorizationException;
 use JOOservices\Flickr\Exceptions\InvalidResponseException;
+use JOOservices\Flickr\Exceptions\RateLimitException;
 use JOOservices\Flickr\Exceptions\TransportException;
 use JOOservices\Flickr\Exceptions\UploadException;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
@@ -117,6 +120,23 @@ final class ClientAndParserTest extends TestCase
         $this->assertSame(0, $cache->puts);
     }
 
+    public function test_cache_policy_enabled_allows_non_registry_cacheable_get(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(200, '{"stat":"ok"}'),
+            new RawResponseData(200, '{"stat":"ok"}'),
+        ]);
+        $cache = new ArrayCache;
+        $client = $this->client($transport, cache: $cache);
+
+        $first = $client->call('flickr.photos.upload.checkTickets', ['tickets' => '1'], new RequestOptionsData(cache: CachePolicy::Enabled));
+        $second = $client->call('flickr.photos.upload.checkTickets', ['tickets' => '1'], new RequestOptionsData(cache: CachePolicy::Enabled));
+
+        $this->assertSame($first, $second);
+        $this->assertCount(1, $transport->requests);
+        $this->assertSame(1, $cache->puts);
+    }
+
     public function test_request_signing_guardrails_avoid_token_and_signer_work_for_public_gets(): void
     {
         $transport = new FakeTransport([
@@ -177,6 +197,7 @@ final class ClientAndParserTest extends TestCase
         $this->assertFalse($failure->ok);
         $this->assertSame(100, $failure->error?->code);
         $this->assertSame('Invalid', $failure->error?->message);
+        $this->assertArrayHasKey('err', $failure->data);
 
         foreach (['<rsp>', '<unknown />'] as $body) {
             $previous = libxml_use_internal_errors(true);
@@ -261,6 +282,39 @@ final class ClientAndParserTest extends TestCase
         $this->assertContains('oauth_signature', $names);
         $this->assertContains('is_friend', $names);
         $this->assertFalse(is_resource($photo['contents']));
+    }
+
+    public function test_upload_client_quotes_multi_word_tags(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'flickr-upload-tags-');
+        file_put_contents($path, 'image-bytes');
+        $transport = new FakeTransport([new RawResponseData(200, '<rsp stat="ok"><photoid>1</photoid></rsp>')]);
+        $client = new FlickrUploadClient(
+            new FlickrConfig('key', 'secret'),
+            $transport,
+            new OAuth1Signer(new FlickrConfig('key', 'secret')),
+            new InMemoryTokenStore(new AccessTokenData('token', 'token-secret')),
+        );
+
+        try {
+            $client->upload(UploadPhotoData::from([
+                'path' => $path,
+                'tags' => ['san francisco', 'php'],
+            ]));
+        } finally {
+            @unlink($path);
+        }
+
+        $multipart = $transport->lastRequest()['options']['multipart'];
+        $tagsPart = null;
+
+        foreach ($multipart as $part) {
+            if ($part['name'] === 'tags') {
+                $tagsPart = $part['contents'];
+            }
+        }
+
+        $this->assertSame('"san francisco" php', $tagsPart);
     }
 
     public function test_upload_client_rejects_missing_file_and_missing_token(): void
@@ -353,6 +407,132 @@ final class ClientAndParserTest extends TestCase
         $client->fail = true;
         $this->expectException(TransportException::class);
         $transport->request('GET', 'https://example.test');
+    }
+
+    public function test_transport_exception_redacts_sensitive_query_parameters(): void
+    {
+        $client = new class implements HttpClientInterface
+        {
+            public function get(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                throw new RuntimeException(
+                    'GET https://api.flickr.com/services/rest?api_key=secret-key&oauth_token=token-value&oauth_signature=sig-value failed'
+                );
+            }
+
+            public function post(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->get($uri, $options);
+            }
+
+            public function put(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->get($uri, $options);
+            }
+
+            public function patch(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->get($uri, $options);
+            }
+
+            public function delete(string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->get($uri, $options);
+            }
+
+            public function request(string $method, string $uri, array $options = []): ResponseWrapperInterface
+            {
+                return $this->get($uri, $options);
+            }
+        };
+
+        $transport = new JooClientTransport($client);
+
+        try {
+            $transport->request('GET', 'https://api.flickr.com/services/rest');
+            $this->fail('Expected TransportException.');
+        } catch (TransportException $exception) {
+            $message = $exception->getMessage();
+            $this->assertStringNotContainsString('secret-key', $message);
+            $this->assertStringNotContainsString('token-value', $message);
+            $this->assertStringNotContainsString('sig-value', $message);
+            $this->assertStringContainsString('[redacted]', $message);
+        }
+    }
+
+    public function test_client_throws_rate_limit_exception_on_http_429(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(429, 'Rate Limit Exceeded', ['Retry-After' => ['60']]),
+        ]);
+        $client = $this->client($transport);
+
+        try {
+            $client->call('flickr.photos.search');
+            $this->fail('Expected RateLimitException to be thrown.');
+        } catch (RateLimitException $exception) {
+            $this->assertSame('Flickr rate limit exceeded.', $exception->getMessage());
+            $this->assertSame(60, $exception->retryAfter());
+        }
+    }
+
+    public function test_client_reads_retry_after_header_case_insensitively(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(429, 'Rate Limit Exceeded', ['retry-after' => ['30']]),
+        ]);
+        $client = $this->client($transport);
+
+        try {
+            $client->call('flickr.photos.search');
+            $this->fail('Expected RateLimitException.');
+        } catch (RateLimitException $exception) {
+            $this->assertSame(30, $exception->retryAfter());
+        }
+    }
+
+    public function test_parser_includes_http_status_in_malformed_json_message(): void
+    {
+        $parser = new FlickrResponseParser;
+
+        try {
+            $parser->parseApi(new RawResponseData(500, '{not-json'));
+            $this->fail('Expected InvalidResponseException.');
+        } catch (InvalidResponseException $exception) {
+            $this->assertStringContainsString('HTTP 500', $exception->getMessage());
+        }
+    }
+
+    public function test_client_throws_authorization_exception_on_auth_errors(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(200, '{"stat":"fail","code":99,"message":"Insufficient permissions"}'),
+        ]);
+        $client = $this->client($transport);
+
+        try {
+            $client->call('flickr.photos.search', [], new RequestOptionsData(throwOnApiError: true));
+            $this->fail('Expected AuthorizationException to be thrown.');
+        } catch (AuthorizationException $exception) {
+            $this->assertSame('Insufficient permissions', $exception->getMessage());
+            $this->assertSame(99, $exception->apiCode());
+        }
+    }
+
+    public function test_client_throws_api_exception_on_other_api_errors(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(200, '{"stat":"fail","code":1,"message":"Photo not found"}'),
+        ]);
+        $client = $this->client($transport);
+
+        try {
+            $client->call('flickr.photos.search', [], new RequestOptionsData(throwOnApiError: true));
+            $this->fail('Expected ApiException to be thrown.');
+        } catch (ApiException $exception) {
+            $this->assertSame('Photo not found', $exception->getMessage());
+            $this->assertSame(1, $exception->apiCode());
+        }
     }
 
     private function client(FakeTransport $transport, ?InMemoryTokenStore $tokens = null, ?ArrayCache $cache = null): FlickrClient

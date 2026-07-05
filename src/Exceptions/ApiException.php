@@ -4,4 +4,21 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Exceptions;
 
-final class ApiException extends FlickrException {}
+use Throwable;
+
+class ApiException extends FlickrException
+{
+    public function __construct(
+        string $message = '',
+        private ?int $apiCode = null,
+        int $code = 0,
+        ?Throwable $previous = null,
+    ) {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public function apiCode(): ?int
+    {
+        return $this->apiCode;
+    }
+}

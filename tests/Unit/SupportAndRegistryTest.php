@@ -13,6 +13,7 @@ use JOOservices\Flickr\Enums\Privacy;
 use JOOservices\Flickr\Exceptions\UploadException;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Support\FileValidator;
+use JOOservices\Flickr\Support\ListNormalizer;
 use JOOservices\Flickr\Support\ParameterNormalizer;
 use JOOservices\Flickr\Support\QueryString;
 use JOOservices\Flickr\Support\SignatureBaseStringBuilder;
@@ -189,5 +190,14 @@ final class SupportAndRegistryTest extends TestCase
         $this->assertNull($null->get('key'));
         $null->forget('key');
         $this->assertNull($null->get('key'));
+    }
+
+    public function test_list_normalizer_trims_and_filters_and_throws(): void
+    {
+        $normalized = ListNormalizer::requireNonEmptyTrimmedList([' tag1 ', '  ', 'tag2', ''], 'tag');
+        $this->assertSame(['tag1', 'tag2'], $normalized);
+
+        $this->expectException(\InvalidArgumentException::class);
+        ListNormalizer::requireNonEmptyTrimmedList([' ', ''], 'tag');
     }
 }

@@ -30,11 +30,9 @@ final class OAuth1Authenticator implements FlickrAuthenticatorContract
 
     public function requestToken(AuthPermission $permission = AuthPermission::Read): RequestTokenData
     {
-        $parameters = [];
-
-        if ($this->config->callbackUrl !== null) {
-            $parameters['oauth_callback'] = $this->config->callbackUrl;
-        }
+        $parameters = [
+            'oauth_callback' => $this->config->callbackUrl ?? 'oob',
+        ];
 
         $oauth = $this->signer->sign('GET', $this->config->requestTokenEndpoint, $parameters);
         $response = $this->transport->request('GET', $this->config->requestTokenEndpoint, [

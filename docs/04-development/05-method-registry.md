@@ -5,7 +5,7 @@ The SDK tracks the official Flickr REST method index in two deterministic files:
 - `tests/Fixtures/official-flickr-methods.php`
 - `src/Metadata/methods.php`
 
-Last verified against the official Flickr REST API index on 2026-05-14.
+Last verified against the official Flickr REST API index on 2026-07-06.
 
 Source URLs:
 
@@ -18,7 +18,7 @@ Upload and replace are separate binary workflows and are not counted as REST met
 Normal CI must not scrape Flickr. Keep verification local and repeatable:
 
 ```bash
-php tools/verify-method-registry.php
+composer verify:registry
 vendor/bin/phpunit --filter OfficialMethodCoverageTest
 ```
 
@@ -28,7 +28,7 @@ When Flickr adds or changes a method:
 2. Regenerate or update `tests/Fixtures/official-flickr-methods.php` from REST method links only.
 3. Update `src/Metadata/methods.php` with docs URL, HTTP method, auth requirement, OAuth permission, and cache policy.
 4. Add or update the matching service wrapper.
-5. Add a DTO or mapper only when the workflow benefits from typed data.
+5. Add a DTO or hydrator only when the workflow benefits from typed data.
 6. Add tests for the registry entry and wrapper behavior.
 7. Keep raw fallback available for unknown future methods.
 
@@ -41,7 +41,7 @@ php -r '$html=file_get_contents("https://www.flickr.com/services/api/"); preg_ma
 Then run:
 
 ```bash
-php tools/verify-method-registry.php
+composer verify:registry
 vendor/bin/phpunit --filter OfficialMethodCoverageTest
 ```
 

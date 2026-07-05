@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Cache;
 
+/**
+ * @internal
+ */
 final class CacheKeyResolver
 {
     /**
