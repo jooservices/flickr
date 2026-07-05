@@ -34,7 +34,7 @@ final class FlickrUploadClient implements FlickrUploadClientContract
         $parameters = array_merge([
             'title' => $data->title,
             'description' => $data->description,
-            'tags' => $data->tags === [] ? null : implode(' ', $data->tags),
+            'tags' => $data->tags === [] ? null : $this->formatTags($data->tags),
             'safety_level' => $data->safetyLevel,
             'content_type' => $data->contentType,
             'hidden' => $data->hidden,
@@ -85,5 +85,19 @@ final class FlickrUploadClient implements FlickrUploadClientContract
         }
 
         return $this->parser->parseUpload($raw);
+    }
+
+    /**
+     * @param  list<string>  $tags
+     */
+    private function formatTags(array $tags): string
+    {
+        $formatted = [];
+
+        foreach ($tags as $tag) {
+            $formatted[] = str_contains($tag, ' ') ? '"'.$tag.'"' : $tag;
+        }
+
+        return implode(' ', $formatted);
     }
 }

@@ -14,14 +14,17 @@ use JsonException;
 use SimpleXMLElement;
 use Throwable;
 
-class FlickrResponseParser
+/**
+ * @internal
+ */
+final class FlickrResponseParser
 {
     public function parseApi(RawResponseData $raw): ApiResponseData
     {
         $body = trim($raw->body);
 
         if ($body === '') {
-            throw new InvalidResponseException('Flickr returned an empty response.');
+            throw new InvalidResponseException('Flickr returned an empty response (HTTP '.$raw->statusCode.').');
         }
 
         if (str_starts_with($body, '<')) {
@@ -31,7 +34,7 @@ class FlickrResponseParser
         try {
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new InvalidResponseException('Flickr returned malformed JSON.', 0, $exception);
+            throw new InvalidResponseException('Flickr returned malformed JSON (HTTP '.$raw->statusCode.').', 0, $exception);
         }
 
         if (! is_array($decoded)) {
@@ -129,10 +132,11 @@ class FlickrResponseParser
 
             if ($stat === 'fail') {
                 $err = $xml->err;
+                $parsed = $this->xmlToArray($xml);
 
                 return new ApiResponseData(
                     ok: false,
-                    data: ['stat' => 'fail'],
+                    data: $parsed,
                     error: new ApiErrorData(
                         code: isset($err['code']) ? (int) $err['code'] : null,
                         message: (string) ($err['msg'] ?? 'Flickr API request failed.'),

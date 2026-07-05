@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Support;
 
+/**
+ * @internal
+ */
 final class QueryString
 {
     public static function encode(string|int|float|bool $value): string

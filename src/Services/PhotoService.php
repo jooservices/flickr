@@ -6,13 +6,30 @@ namespace JOOservices\Flickr\Services;
 
 use InvalidArgumentException;
 use JOOservices\Flickr\Contracts\Services\PhotoServiceContract;
+use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
 use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
 use JOOservices\Flickr\DTO\Common\RequestOptionsData;
+use JOOservices\Flickr\DTO\Photos\PhotoData;
+use JOOservices\Flickr\DTO\Photos\PhotoExifData;
+use JOOservices\Flickr\DTO\Photos\PhotoInfoData;
+use JOOservices\Flickr\DTO\Photos\PhotoSizeData;
 use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
+use JOOservices\Flickr\Enums\SortOrder;
+use JOOservices\Flickr\Hydrators\PhotoHydrator;
+use JOOservices\Flickr\Pagination\Paginator;
+use JOOservices\Flickr\Support\ListNormalizer;
 
 final class PhotoService extends AbstractRawService implements PhotoServiceContract
 {
+    public function __construct(
+        RawApiServiceContract $raw,
+        private PhotoHydrator $hydrator = new PhotoHydrator,
+        private Paginator $paginator = new Paginator,
+    ) {
+        parent::__construct($raw);
+    }
+
     public function addTags(string $photoId, array $tags): ApiResponseData
     {
         return $this->callRaw('flickr.photos.addTags', [
@@ -71,6 +88,11 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
         return $this->callRaw('flickr.photos.getExif', ['photo_id' => $this->requireId($photoId, 'photo')]);
     }
 
+    public function getExifData(string $photoId): PhotoExifData
+    {
+        return $this->hydrator->exif($this->getExif($photoId));
+    }
+
     /**
      * @param  array<string, mixed>  $parameters
      */
@@ -82,6 +104,11 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
     public function getInfo(string $photoId): ApiResponseData
     {
         return $this->callRaw('flickr.photos.getInfo', ['photo_id' => $this->requireId($photoId, 'photo')]);
+    }
+
+    public function getInfoData(string $photoId): PhotoInfoData
+    {
+        return $this->hydrator->photoInfo($this->getInfo($photoId));
     }
 
     /**
@@ -119,6 +146,14 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
     public function getSizes(string $photoId): ApiResponseData
     {
         return $this->callRaw('flickr.photos.getSizes', ['photo_id' => $this->requireId($photoId, 'photo')]);
+    }
+
+    /**
+     * @return list<PhotoSizeData>
+     */
+    public function getSizesData(string $photoId): array
+    {
+        return $this->hydrator->sizes($this->getSizes($photoId));
     }
 
     /**
@@ -164,6 +199,14 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
     }
 
     /**
+     * @return list<PhotoData>
+     */
+    public function searchData(SearchPhotosData $data): array
+    {
+        return $this->hydrator->photos($this->search($data));
+    }
+
+    /**
      * @return iterable<ApiResponseData>
      */
     public function searchPages(
@@ -171,29 +214,15 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
         ?PaginationOptionsData $pagination = null,
         ?RequestOptionsData $requestOptions = null,
     ): iterable {
-        $pagination ??= new PaginationOptionsData;
-        $page = $pagination->startPage;
-        $pagesRead = 0;
-
-        while ($pagination->maxPages === null || $pagesRead < $pagination->maxPages) {
-            $parameters = $this->searchParameters($data, $page, $pagination->perPage);
-            $response = $this->raw->call('flickr.photos.search', $parameters, $requestOptions);
-
-            yield $response;
-
-            $pagesRead++;
-            $items = $this->photoItems($response);
-
-            if ($pagination->stopWhenEmpty && $items === []) {
-                break;
-            }
-
-            if ($response->pagination === null || $page >= $response->pagination->pages) {
-                break;
-            }
-
-            $page++;
-        }
+        return $this->paginator->pages(
+            fn (int $page, ?int $perPage): ApiResponseData => $this->raw->call(
+                'flickr.photos.search',
+                $this->searchParameters($data, $page, $perPage),
+                $requestOptions,
+            ),
+            $pagination,
+            fn (ApiResponseData $response): bool => ($response->data['photos']['photo'] ?? []) === [],
+        );
     }
 
     /**
@@ -201,27 +230,19 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
      */
     private function searchParameters(SearchPhotosData $data, ?int $page = null, ?int $perPage = null): array
     {
-        return array_merge($data->extraParameters, [
+        return array_merge([
             'text' => $data->text,
             'tags' => $data->tags,
             'user_id' => $data->userId,
             'extras' => $data->extras,
             'page' => $page ?? $data->page,
             'per_page' => $perPage ?? $data->perPage,
-            'sort' => $data->sort,
+            'sort' => $data->sort instanceof SortOrder ? $data->sort->value : $data->sort,
             'tag_mode' => $data->tagMode,
             'safe_search' => $data->safeSearch,
-        ]);
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function photoItems(ApiResponseData $response): array
-    {
-        $photos = $response->data['photos']['photo'] ?? null;
-
-        return is_array($photos) ? array_values($photos) : [];
+            'license' => $data->license?->value,
+            'privacy_filter' => $data->privacyFilter?->value,
+        ], $data->extraParameters);
     }
 
     /**
@@ -277,26 +298,11 @@ final class PhotoService extends AbstractRawService implements PhotoServiceContr
         ]);
     }
 
-    private function requireId(string $id, string $name): string
-    {
-        if (trim($id) === '') {
-            throw new InvalidArgumentException("Flickr {$name} id is required.");
-        }
-
-        return $id;
-    }
-
     /**
      * @param  list<string>  $tags
      */
     private function tags(array $tags): string
     {
-        $tags = array_values(array_filter(array_map('trim', $tags), static fn (string $tag): bool => $tag !== ''));
-
-        if ($tags === []) {
-            throw new InvalidArgumentException('At least one tag is required.');
-        }
-
-        return implode(' ', $tags);
+        return implode(' ', ListNormalizer::requireNonEmptyTrimmedList($tags, 'tag'));
     }
 }

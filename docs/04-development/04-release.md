@@ -12,14 +12,10 @@ composer validate --strict
 composer install
 composer lint:fix
 composer lint:all
+composer verify:registry
+composer verify:api-index
 composer test
 composer check
-```
-
-Run coverage when the local environment has a working coverage driver:
-
-```bash
-composer test:coverage
 composer ci
 ```
 
@@ -34,8 +30,8 @@ FLICKR_REAL_TESTS=true composer test -- --filter RealFlickrTest
 - Confirm no secrets, OAuth tokens, or real credentials are committed.
 - Confirm examples read credentials from environment variables.
 - Confirm upload and replace examples require explicit file paths.
-- Confirm README and docs match the public API.
-- Confirm `CHANGELOG.md` has the release notes.
+- Confirm README, `AGENTS.md`, `CHANGELOG.md`, and docs match the public API.
+- Confirm `docs/02-user-guide/12-full-api-index.md` is current (`composer generate:api-index` if needed).
 - Confirm `LICENSE.md` matches the Composer license.
 
 ## Versioning
@@ -48,9 +44,13 @@ Use semantic versioning:
 
 ## Tagging
 
-Do not create tags or GitHub releases from automation unless explicitly authorized.
+Pushing a `v*.*.*` tag to `master` triggers `.github/workflows/release.yml`, which:
 
-Manual release flow:
+1. Runs validation (`composer lint:all`, `composer verify:registry`, `composer verify:api-index`, `composer test`)
+2. Creates a GitHub release with generated notes
+3. Triggers Packagist update when `PACKAGIST_USERNAME` and `PACKAGIST_TOKEN` are configured
+
+Manual fallback:
 
 ```bash
 git checkout master
@@ -59,8 +59,8 @@ git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-Create the GitHub release from the tag and paste the relevant `CHANGELOG.md` section.
+Paste the relevant `CHANGELOG.md` section into the GitHub release if auto-generated notes are insufficient.
 
 ## Packagist
 
-Do not publish to Packagist from CI. After the GitHub release, verify Packagist is synced or trigger a manual update from Packagist if needed.
+Packagist update is automated by `release.yml` when secrets are configured. Verify the new version appears on Packagist after the workflow completes.

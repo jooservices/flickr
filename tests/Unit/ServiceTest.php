@@ -144,6 +144,19 @@ final class ServiceTest extends TestCase
         $this->assertCount(3, $raw->calls);
     }
 
+    public function test_search_extra_parameters_override_canonical_defaults(): void
+    {
+        $raw = new FakeRawApiService;
+        $photos = new PhotoService($raw);
+
+        $photos->search(SearchPhotosData::from([
+            'perPage' => 100,
+            'extraParameters' => ['per_page' => 25],
+        ]));
+
+        $this->assertSame(25, $raw->lastCall()['parameters']['per_page']);
+    }
+
     public function test_services_reject_invalid_inputs(): void
     {
         $this->expectException(\InvalidArgumentException::class);

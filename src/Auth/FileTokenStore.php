@@ -8,6 +8,7 @@ use JOOservices\Flickr\Contracts\Auth\FlickrTokenStoreContract;
 use JOOservices\Flickr\DTO\Auth\AccessTokenData;
 use JOOservices\Flickr\Exceptions\TokenStorageException;
 use JsonException;
+use Throwable;
 
 final class FileTokenStore implements FlickrTokenStoreContract
 {
@@ -33,7 +34,11 @@ final class FileTokenStore implements FlickrTokenStoreContract
             throw new TokenStorageException('Token file must contain a JSON object.');
         }
 
-        return AccessTokenData::from($decoded);
+        try {
+            return AccessTokenData::from($decoded);
+        } catch (Throwable $exception) {
+            throw new TokenStorageException('Token file contains an invalid access token shape.', 0, $exception);
+        }
     }
 
     public function put(AccessTokenData $token): void
@@ -49,6 +54,8 @@ final class FileTokenStore implements FlickrTokenStoreContract
         if (file_put_contents($this->path, $encoded, LOCK_EX) === false) {
             throw new TokenStorageException('Failed to write token file.');
         }
+
+        chmod($this->path, 0600);
     }
 
     public function forget(): void

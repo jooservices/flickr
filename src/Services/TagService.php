@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Services;
 
+use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
 use JOOservices\Flickr\Contracts\Services\TagServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Tags\TagData;
+use JOOservices\Flickr\Hydrators\TagHydrator;
 
 final class TagService extends AbstractRawService implements TagServiceContract
 {
+    public function __construct(
+        RawApiServiceContract $raw,
+        private TagHydrator $hydrator = new TagHydrator,
+    ) {
+        parent::__construct($raw);
+    }
+
     /**
      * @param  array<string, mixed>  $parameters
      */
@@ -31,6 +41,15 @@ final class TagService extends AbstractRawService implements TagServiceContract
     public function getHotList(array $parameters = []): ApiResponseData
     {
         return $this->callRaw('flickr.tags.getHotList', $parameters);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parameters
+     * @return list<TagData>
+     */
+    public function getHotListData(array $parameters = []): array
+    {
+        return $this->hydrator->hotList($this->getHotList($parameters));
     }
 
     /**

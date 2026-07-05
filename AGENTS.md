@@ -40,13 +40,14 @@ REST flow:
 - `src/Client`: REST client, upload client, transport adapter, parser, request helpers.
 - `src/Config`: SDK configuration.
 - `src/Contracts`: public contracts for auth, cache, client, and services.
-- `src/DTO`: DTO-first public data objects.
+- `src/DTO`: typed request, response, and envelope data objects.
 - `src/Enums`: Flickr domain values.
 - `src/Exceptions`: SDK exception hierarchy.
-- `src/Mappers`: response mapping helpers.
+- `src/Hydrators`: response hydration helpers for typed API results.
 - `src/Metadata`: official method registry and definitions.
+- `src/Pagination`: generic lazy pagination helpers.
 - `src/Services`: Flickr service wrappers and raw fallback.
-- `src/Support`: normalization, signing helpers, URL and file support.
+- `src/Support`: normalization, signing helpers, URL builders, and file support.
 - `tests`: unit, integration, fixtures, and fakes.
 - `docs`: architecture, getting started, user guide, examples, development, maintenance.
 - `examples`: manually runnable scripts.
@@ -57,7 +58,7 @@ REST flow:
 2. Update `src/Metadata/methods.php` with docs URL, HTTP method, auth permission, and cache policy.
 3. Add or update the appropriate service wrapper.
 4. Add a DTO only when the method has a complex or friendly workflow.
-5. Add a mapper when the response is important enough to expose as typed data.
+5. Add a hydrator when the response is important enough to expose as typed data.
 6. Add unit tests for happy, unhappy, weird, edge, and security-sensitive behavior where relevant.
 7. Add docs or an example for user-facing workflows.
 8. Keep unknown-method raw fallback working.
@@ -97,6 +98,8 @@ REST flow:
 composer install
 composer lint:all
 composer test
+composer verify:registry
+composer verify:api-index
 composer check
 composer ci
 ```

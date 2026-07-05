@@ -4,7 +4,7 @@ JSON REST responses are the primary supported response format. Upload and replac
 
 Normal API calls return `ApiResponseData`. When Flickr returns `stat=fail`, the response has `ok=false` and an `ApiErrorData` value unless request options ask the SDK to throw.
 
-Malformed JSON, malformed XML, empty bodies, and structurally invalid responses throw `InvalidResponseException`. Transport failures throw `TransportException`.
+Malformed JSON, malformed XML, empty bodies, and structurally invalid responses throw `InvalidResponseException`. Transport failures throw `TransportException`. Rate-limit and authorization failures throw `RateLimitException` and `AuthorizationException` when Flickr or the transport signals those conditions.
 
 V1 ships cache contracts and adapters:
 

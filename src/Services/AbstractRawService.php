@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Services;
 
+use InvalidArgumentException;
 use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
 
@@ -17,5 +18,14 @@ abstract class AbstractRawService
     protected function callRaw(string $method, array $parameters = []): ApiResponseData
     {
         return $this->raw->call($method, $parameters);
+    }
+
+    protected function requireId(string $id, string $name): string
+    {
+        if (trim($id) === '') {
+            throw new InvalidArgumentException("Flickr {$name} id is required.");
+        }
+
+        return $id;
     }
 }
