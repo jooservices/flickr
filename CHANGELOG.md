@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v1.1.1 - 2026-07-06
+
+### Changed
+
+- Bumped dev dependencies: `phpunit/phpunit` to `^13.0`, `squizlabs/php_codesniffer` to `^4.0`.
+- Bumped GitHub Actions: `actions/upload-artifact` to `7.0.1`, `actions/labeler` to `6.1.0`, `amannn/action-semantic-pull-request` to `6.1.1`, `shivammathur/setup-php` to `2.37.2`, `softprops/action-gh-release` to `3.0.1`.
+
 ## v1.1.0 - 2026-07-06
 
 ### Added
