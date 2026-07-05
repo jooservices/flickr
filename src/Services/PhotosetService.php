@@ -4,13 +4,23 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Services;
 
-use InvalidArgumentException;
 use JOOservices\Flickr\Contracts\Services\PhotosetServiceContract;
+use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
 use JOOservices\Flickr\DTO\Photosets\CreatePhotosetData;
+use JOOservices\Flickr\DTO\Photosets\PhotosetData;
+use JOOservices\Flickr\DTO\Photosets\PhotosetPhotoData;
+use JOOservices\Flickr\Hydrators\PhotosetHydrator;
 
 final class PhotosetService extends AbstractRawService implements PhotosetServiceContract
 {
+    public function __construct(
+        RawApiServiceContract $raw,
+        private PhotosetHydrator $hydrator = new PhotosetHydrator,
+    ) {
+        parent::__construct($raw);
+    }
+
     public function addPhoto(string $photosetId, string $photoId): ApiResponseData
     {
         return $this->callRaw('flickr.photosets.addPhoto', [
@@ -70,6 +80,14 @@ final class PhotosetService extends AbstractRawService implements PhotosetServic
         return $this->callRaw('flickr.photosets.getList', ['user_id' => $userId]);
     }
 
+    /**
+     * @return list<PhotosetData>
+     */
+    public function getListData(?string $userId = null): array
+    {
+        return $this->hydrator->list($this->getList($userId));
+    }
+
     public function getPhotos(string $photosetId, array $extras = [], int $page = 1, int $perPage = 100): ApiResponseData
     {
         return $this->callRaw('flickr.photosets.getPhotos', [
@@ -78,6 +96,15 @@ final class PhotosetService extends AbstractRawService implements PhotosetServic
             'page' => $page,
             'per_page' => $perPage,
         ]);
+    }
+
+    /**
+     * @param  list<string>  $extras
+     * @return list<PhotosetPhotoData>
+     */
+    public function getPhotosData(string $photosetId, array $extras = [], int $page = 1, int $perPage = 100): array
+    {
+        return $this->hydrator->photos($this->getPhotos($photosetId, $extras, $page, $perPage));
     }
 
     /**
@@ -118,14 +145,5 @@ final class PhotosetService extends AbstractRawService implements PhotosetServic
     public function setPrimaryPhoto(array $parameters = []): ApiResponseData
     {
         return $this->callRaw('flickr.photosets.setPrimaryPhoto', $parameters);
-    }
-
-    private function requireId(string $id, string $name): string
-    {
-        if (trim($id) === '') {
-            throw new InvalidArgumentException("Flickr {$name} id is required.");
-        }
-
-        return $id;
     }
 }

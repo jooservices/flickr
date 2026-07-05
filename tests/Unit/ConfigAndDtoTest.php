@@ -6,10 +6,6 @@ namespace JOOservices\Flickr\Tests\Unit;
 
 use JOOservices\Flickr\Client\FakeFlickrTransport;
 use JOOservices\Flickr\Config\FlickrConfig;
-use JOOservices\Flickr\DTO\Auth\AuthorizationUrlData;
-use JOOservices\Flickr\DTO\Auth\AuthorizedUserData;
-use JOOservices\Flickr\DTO\Auth\OAuthConsumerData;
-use JOOservices\Flickr\DTO\Auth\RequestTokenData;
 use JOOservices\Flickr\DTO\Common\PaginationOptionsData;
 use JOOservices\Flickr\DTO\Favorites\FavoritePhotoData;
 use JOOservices\Flickr\DTO\Galleries\GalleryData;
@@ -28,12 +24,12 @@ use JOOservices\Flickr\DTO\Photos\SearchPhotosData;
 use JOOservices\Flickr\DTO\Photosets\CreatePhotosetData;
 use JOOservices\Flickr\DTO\Photosets\PhotosetData;
 use JOOservices\Flickr\DTO\Photosets\PhotosetPhotoData;
+use JOOservices\Flickr\DTO\Places\PlaceData;
 use JOOservices\Flickr\DTO\Tags\MachineTagData;
 use JOOservices\Flickr\DTO\Tags\TagData;
 use JOOservices\Flickr\DTO\Upload\ReplacePhotoData;
 use JOOservices\Flickr\DTO\Upload\UploadPhotoData;
 use JOOservices\Flickr\DTO\Upload\UploadTicketData;
-use JOOservices\Flickr\Enums\AuthPermission;
 use JOOservices\Flickr\Enums\ContentType;
 use JOOservices\Flickr\Enums\HiddenStatus;
 use JOOservices\Flickr\Enums\HttpMethod;
@@ -95,9 +91,6 @@ final class ConfigAndDtoTest extends TestCase
     public function test_public_dto_shapes_are_constructible(): void
     {
         $dtos = [
-            new AuthorizationUrlData(new RequestTokenData('request-token', 'request-secret'), AuthPermission::Read),
-            new AuthorizedUserData('1', 'username', 'Full Name'),
-            new OAuthConsumerData('key', 'secret', 'https://example.test/callback'),
             new PaginationOptionsData(startPage: 2, perPage: 10, maxPages: 3, stopWhenEmpty: false),
             new FavoritePhotoData('1', 'owner'),
             new GalleryData('gallery-id', 'Gallery'),
@@ -115,11 +108,72 @@ final class ConfigAndDtoTest extends TestCase
             new CreatePhotosetData('Set', '1'),
             new PhotosetData('set-id', 'Title'),
             new PhotosetPhotoData('1', 'Title'),
+            new PlaceData('woe:1', 'San Francisco'),
             new MachineTagData('namespace', 'predicate', 'value'),
             new TagData('tag'),
             new UploadTicketData('ticket-id', complete: false),
         ];
 
-        $this->assertCount(23, $dtos);
+        $this->assertCount(21, $dtos);
+    }
+
+    public function test_flickr_config_validations(): void
+    {
+        try {
+            FlickrConfig::from([
+                'apiKey' => 'key',
+                'apiSecret' => 'secret',
+                'timeoutSeconds' => 0,
+            ]);
+            $this->fail('Expected ConfigurationException for timeoutSeconds < 1');
+        } catch (ConfigurationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            FlickrConfig::from([
+                'apiKey' => 'key',
+                'apiSecret' => 'secret',
+                'retryTimes' => -1,
+            ]);
+            $this->fail('Expected ConfigurationException for retryTimes < 0');
+        } catch (ConfigurationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            FlickrConfig::from([
+                'apiKey' => 'key',
+                'apiSecret' => 'secret',
+                'publicCacheTtlSeconds' => 0,
+            ]);
+            $this->fail('Expected ConfigurationException for publicCacheTtlSeconds < 1');
+        } catch (ConfigurationException) {
+            $this->addToAssertionCount(1);
+        }
+    }
+
+    public function test_pagination_options_data_validations(): void
+    {
+        try {
+            new PaginationOptionsData(maxPages: 0);
+            $this->fail('Expected InvalidArgumentException for maxPages < 1');
+        } catch (\InvalidArgumentException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            new PaginationOptionsData(perPage: 0);
+            $this->fail('Expected InvalidArgumentException for perPage < 1');
+        } catch (\InvalidArgumentException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            new PaginationOptionsData(startPage: 0);
+            $this->fail('Expected InvalidArgumentException for startPage < 1');
+        } catch (\InvalidArgumentException) {
+            $this->addToAssertionCount(1);
+        }
     }
 }

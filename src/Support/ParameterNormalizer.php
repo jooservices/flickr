@@ -6,6 +6,9 @@ namespace JOOservices\Flickr\Support;
 
 use BackedEnum;
 
+/**
+ * @internal
+ */
 final class ParameterNormalizer
 {
     /**

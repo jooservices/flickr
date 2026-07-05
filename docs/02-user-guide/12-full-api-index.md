@@ -1,56 +1,230 @@
 # Full API Index
 
-The package exposes service wrappers for all 224 methods currently listed in Flickr's official API method index.
+Generated from `src/Metadata/methods.php`. Do not edit manually.
 
-Wrapper naming follows Flickr namespaces:
-
-- `flickr.activity.*` -> `activity()`
-- `flickr.auth.*` -> `authApi()`
-- `flickr.auth.oauth.*` -> `authOauthApi()`
-- `flickr.blogs.*` -> `blogs()`
-- `flickr.cameras.*` -> `cameras()`
-- `flickr.collections.*` -> `collections()`
-- `flickr.commons.*` -> `commons()`
-- `flickr.contacts.*` -> `contacts()`
-- `flickr.favorites.*` -> `favorites()`
-- `flickr.galleries.*` -> `galleries()`
-- `flickr.groups.*` -> `groups()`
-- `flickr.groups.members.*` -> `groupsMembers()`
-- `flickr.groups.pools.*` -> `groupsPools()`
-- `flickr.groups.discuss.topics.*` -> `groupsDiscussTopics()`
-- `flickr.groups.discuss.replies.*` -> `groupsDiscussReplies()`
-- `flickr.interestingness.*` -> `interestingness()`
-- `flickr.machinetags.*` -> `machinetags()`
-- `flickr.panda.*` -> `panda()`
-- `flickr.people.*` -> `people()`
-- `flickr.photos.*` -> `photos()`
-- `flickr.photos.comments.*` -> `photosComments()`
-- `flickr.photos.geo.*` -> `photosGeo()`
-- `flickr.photos.licenses.*` -> `photosLicenses()`
-- `flickr.photos.notes.*` -> `photosNotes()`
-- `flickr.photos.people.*` -> `photosPeople()`
-- `flickr.photos.suggestions.*` -> `photosSuggestions()`
-- `flickr.photos.transform.*` -> `photosTransform()`
-- `flickr.photos.upload.*` -> `photosUpload()`
-- `flickr.photosets.*` -> `photosets()`
-- `flickr.photosets.comments.*` -> `photosetsComments()`
-- `flickr.places.*` -> `places()`
-- `flickr.prefs.*` -> `prefs()`
-- `flickr.profile.*` -> `profile()`
-- `flickr.push.*` -> `push()`
-- `flickr.reflection.*` -> `reflection()`
-- `flickr.stats.*` -> `stats()`
-- `flickr.tags.*` -> `tags()`
-- `flickr.test.*` -> `test()`
-- `flickr.testimonials.*` -> `testimonials()`
-- `flickr.urls.*` -> `urls()`
-
-Most complete-index wrappers use this shape:
-
-```php
-$response = $flickr->places()->find([
-    'query' => 'Ho Chi Minh City',
-]);
-```
-
-DTO-first wrappers remain available for selected high-use workflows such as `photos()->search(...)`, `photosets()->create(...)`, and `uploads()->upload(...)`.
+| Method | Auth | Permission | HTTP | Cacheable | Deprecated | Docs |
+| --- | --- | --- | --- | --- | --- | --- |
+| `flickr.activity.userComments` | yes | read | GET | no | no | [flickr.activity.userComments](https://www.flickr.com/services/api/flickr.activity.userComments.html) |
+| `flickr.activity.userPhotos` | yes | read | GET | no | no | [flickr.activity.userPhotos](https://www.flickr.com/services/api/flickr.activity.userPhotos.html) |
+| `flickr.auth.checkToken` | no | - | GET | no | yes | [flickr.auth.checkToken](https://www.flickr.com/services/api/flickr.auth.checkToken.html) |
+| `flickr.auth.getFrob` | no | - | GET | no | yes | [flickr.auth.getFrob](https://www.flickr.com/services/api/flickr.auth.getFrob.html) |
+| `flickr.auth.getFullToken` | no | - | GET | no | yes | [flickr.auth.getFullToken](https://www.flickr.com/services/api/flickr.auth.getFullToken.html) |
+| `flickr.auth.getToken` | no | - | GET | no | yes | [flickr.auth.getToken](https://www.flickr.com/services/api/flickr.auth.getToken.html) |
+| `flickr.auth.oauth.checkToken` | no | - | GET | no | yes | [flickr.auth.oauth.checkToken](https://www.flickr.com/services/api/flickr.auth.oauth.checkToken.html) |
+| `flickr.auth.oauth.getAccessToken` | no | - | GET | no | yes | [flickr.auth.oauth.getAccessToken](https://www.flickr.com/services/api/flickr.auth.oauth.getAccessToken.html) |
+| `flickr.blogs.getList` | yes | read | GET | no | no | [flickr.blogs.getList](https://www.flickr.com/services/api/flickr.blogs.getList.html) |
+| `flickr.blogs.getServices` | no | - | GET | yes | no | [flickr.blogs.getServices](https://www.flickr.com/services/api/flickr.blogs.getServices.html) |
+| `flickr.blogs.postPhoto` | yes | write | POST | no | no | [flickr.blogs.postPhoto](https://www.flickr.com/services/api/flickr.blogs.postPhoto.html) |
+| `flickr.cameras.getBrandModels` | no | - | GET | yes | no | [flickr.cameras.getBrandModels](https://www.flickr.com/services/api/flickr.cameras.getBrandModels.html) |
+| `flickr.cameras.getBrands` | no | - | GET | yes | no | [flickr.cameras.getBrands](https://www.flickr.com/services/api/flickr.cameras.getBrands.html) |
+| `flickr.collections.getInfo` | yes | read | GET | no | no | [flickr.collections.getInfo](https://www.flickr.com/services/api/flickr.collections.getInfo.html) |
+| `flickr.collections.getTree` | no | - | GET | yes | no | [flickr.collections.getTree](https://www.flickr.com/services/api/flickr.collections.getTree.html) |
+| `flickr.commons.getInstitutions` | no | - | GET | yes | no | [flickr.commons.getInstitutions](https://www.flickr.com/services/api/flickr.commons.getInstitutions.html) |
+| `flickr.contacts.getList` | yes | read | GET | no | no | [flickr.contacts.getList](https://www.flickr.com/services/api/flickr.contacts.getList.html) |
+| `flickr.contacts.getListRecentlyUploaded` | yes | read | GET | no | no | [flickr.contacts.getListRecentlyUploaded](https://www.flickr.com/services/api/flickr.contacts.getListRecentlyUploaded.html) |
+| `flickr.contacts.getPublicList` | no | - | GET | yes | no | [flickr.contacts.getPublicList](https://www.flickr.com/services/api/flickr.contacts.getPublicList.html) |
+| `flickr.contacts.getTaggingSuggestions` | yes | read | GET | no | no | [flickr.contacts.getTaggingSuggestions](https://www.flickr.com/services/api/flickr.contacts.getTaggingSuggestions.html) |
+| `flickr.favorites.add` | yes | write | POST | no | no | [flickr.favorites.add](https://www.flickr.com/services/api/flickr.favorites.add.html) |
+| `flickr.favorites.getContext` | no | - | GET | yes | no | [flickr.favorites.getContext](https://www.flickr.com/services/api/flickr.favorites.getContext.html) |
+| `flickr.favorites.getList` | no | - | GET | yes | no | [flickr.favorites.getList](https://www.flickr.com/services/api/flickr.favorites.getList.html) |
+| `flickr.favorites.getPublicList` | no | - | GET | yes | no | [flickr.favorites.getPublicList](https://www.flickr.com/services/api/flickr.favorites.getPublicList.html) |
+| `flickr.favorites.remove` | yes | write | POST | no | no | [flickr.favorites.remove](https://www.flickr.com/services/api/flickr.favorites.remove.html) |
+| `flickr.galleries.addPhoto` | yes | write | POST | no | no | [flickr.galleries.addPhoto](https://www.flickr.com/services/api/flickr.galleries.addPhoto.html) |
+| `flickr.galleries.create` | yes | write | POST | no | no | [flickr.galleries.create](https://www.flickr.com/services/api/flickr.galleries.create.html) |
+| `flickr.galleries.editMeta` | yes | write | POST | no | no | [flickr.galleries.editMeta](https://www.flickr.com/services/api/flickr.galleries.editMeta.html) |
+| `flickr.galleries.editPhoto` | yes | write | POST | no | no | [flickr.galleries.editPhoto](https://www.flickr.com/services/api/flickr.galleries.editPhoto.html) |
+| `flickr.galleries.editPhotos` | yes | write | POST | no | no | [flickr.galleries.editPhotos](https://www.flickr.com/services/api/flickr.galleries.editPhotos.html) |
+| `flickr.galleries.getInfo` | no | - | GET | yes | no | [flickr.galleries.getInfo](https://www.flickr.com/services/api/flickr.galleries.getInfo.html) |
+| `flickr.galleries.getList` | no | - | GET | yes | no | [flickr.galleries.getList](https://www.flickr.com/services/api/flickr.galleries.getList.html) |
+| `flickr.galleries.getListForPhoto` | no | - | GET | yes | no | [flickr.galleries.getListForPhoto](https://www.flickr.com/services/api/flickr.galleries.getListForPhoto.html) |
+| `flickr.galleries.getPhotos` | no | - | GET | yes | no | [flickr.galleries.getPhotos](https://www.flickr.com/services/api/flickr.galleries.getPhotos.html) |
+| `flickr.galleries.removePhoto` | yes | write | POST | no | no | [flickr.galleries.removePhoto](https://www.flickr.com/services/api/flickr.galleries.removePhoto.html) |
+| `flickr.groups.discuss.replies.add` | yes | write | POST | no | no | [flickr.groups.discuss.replies.add](https://www.flickr.com/services/api/flickr.groups.discuss.replies.add.html) |
+| `flickr.groups.discuss.replies.delete` | yes | delete | POST | no | no | [flickr.groups.discuss.replies.delete](https://www.flickr.com/services/api/flickr.groups.discuss.replies.delete.html) |
+| `flickr.groups.discuss.replies.edit` | yes | write | POST | no | no | [flickr.groups.discuss.replies.edit](https://www.flickr.com/services/api/flickr.groups.discuss.replies.edit.html) |
+| `flickr.groups.discuss.replies.getInfo` | no | - | GET | yes | no | [flickr.groups.discuss.replies.getInfo](https://www.flickr.com/services/api/flickr.groups.discuss.replies.getInfo.html) |
+| `flickr.groups.discuss.replies.getList` | no | - | GET | yes | no | [flickr.groups.discuss.replies.getList](https://www.flickr.com/services/api/flickr.groups.discuss.replies.getList.html) |
+| `flickr.groups.discuss.topics.add` | yes | write | POST | no | no | [flickr.groups.discuss.topics.add](https://www.flickr.com/services/api/flickr.groups.discuss.topics.add.html) |
+| `flickr.groups.discuss.topics.getInfo` | no | - | GET | yes | no | [flickr.groups.discuss.topics.getInfo](https://www.flickr.com/services/api/flickr.groups.discuss.topics.getInfo.html) |
+| `flickr.groups.discuss.topics.getList` | no | - | GET | yes | no | [flickr.groups.discuss.topics.getList](https://www.flickr.com/services/api/flickr.groups.discuss.topics.getList.html) |
+| `flickr.groups.getInfo` | no | - | GET | yes | no | [flickr.groups.getInfo](https://www.flickr.com/services/api/flickr.groups.getInfo.html) |
+| `flickr.groups.join` | yes | write | POST | no | no | [flickr.groups.join](https://www.flickr.com/services/api/flickr.groups.join.html) |
+| `flickr.groups.joinRequest` | yes | write | POST | no | no | [flickr.groups.joinRequest](https://www.flickr.com/services/api/flickr.groups.joinRequest.html) |
+| `flickr.groups.leave` | yes | delete | POST | no | no | [flickr.groups.leave](https://www.flickr.com/services/api/flickr.groups.leave.html) |
+| `flickr.groups.members.getList` | yes | read | GET | no | no | [flickr.groups.members.getList](https://www.flickr.com/services/api/flickr.groups.members.getList.html) |
+| `flickr.groups.pools.add` | yes | write | POST | no | no | [flickr.groups.pools.add](https://www.flickr.com/services/api/flickr.groups.pools.add.html) |
+| `flickr.groups.pools.getContext` | no | - | GET | yes | no | [flickr.groups.pools.getContext](https://www.flickr.com/services/api/flickr.groups.pools.getContext.html) |
+| `flickr.groups.pools.getGroups` | yes | read | GET | no | no | [flickr.groups.pools.getGroups](https://www.flickr.com/services/api/flickr.groups.pools.getGroups.html) |
+| `flickr.groups.pools.getPhotos` | no | - | GET | yes | no | [flickr.groups.pools.getPhotos](https://www.flickr.com/services/api/flickr.groups.pools.getPhotos.html) |
+| `flickr.groups.pools.remove` | yes | write | POST | no | no | [flickr.groups.pools.remove](https://www.flickr.com/services/api/flickr.groups.pools.remove.html) |
+| `flickr.groups.search` | no | - | GET | yes | no | [flickr.groups.search](https://www.flickr.com/services/api/flickr.groups.search.html) |
+| `flickr.interestingness.getList` | no | - | GET | yes | no | [flickr.interestingness.getList](https://www.flickr.com/services/api/flickr.interestingness.getList.html) |
+| `flickr.machinetags.getNamespaces` | no | - | GET | yes | no | [flickr.machinetags.getNamespaces](https://www.flickr.com/services/api/flickr.machinetags.getNamespaces.html) |
+| `flickr.machinetags.getPairs` | no | - | GET | yes | no | [flickr.machinetags.getPairs](https://www.flickr.com/services/api/flickr.machinetags.getPairs.html) |
+| `flickr.machinetags.getPredicates` | no | - | GET | yes | no | [flickr.machinetags.getPredicates](https://www.flickr.com/services/api/flickr.machinetags.getPredicates.html) |
+| `flickr.machinetags.getRecentValues` | no | - | GET | yes | no | [flickr.machinetags.getRecentValues](https://www.flickr.com/services/api/flickr.machinetags.getRecentValues.html) |
+| `flickr.machinetags.getValues` | no | - | GET | yes | no | [flickr.machinetags.getValues](https://www.flickr.com/services/api/flickr.machinetags.getValues.html) |
+| `flickr.panda.getList` | no | - | GET | yes | yes | [flickr.panda.getList](https://www.flickr.com/services/api/flickr.panda.getList.html) |
+| `flickr.panda.getPhotos` | no | - | GET | yes | yes | [flickr.panda.getPhotos](https://www.flickr.com/services/api/flickr.panda.getPhotos.html) |
+| `flickr.people.findByEmail` | no | - | GET | yes | no | [flickr.people.findByEmail](https://www.flickr.com/services/api/flickr.people.findByEmail.html) |
+| `flickr.people.findByUsername` | no | - | GET | yes | no | [flickr.people.findByUsername](https://www.flickr.com/services/api/flickr.people.findByUsername.html) |
+| `flickr.people.getGroups` | yes | read | GET | no | no | [flickr.people.getGroups](https://www.flickr.com/services/api/flickr.people.getGroups.html) |
+| `flickr.people.getInfo` | no | - | GET | yes | no | [flickr.people.getInfo](https://www.flickr.com/services/api/flickr.people.getInfo.html) |
+| `flickr.people.getLimits` | yes | read | GET | no | no | [flickr.people.getLimits](https://www.flickr.com/services/api/flickr.people.getLimits.html) |
+| `flickr.people.getPhotos` | no | - | GET | yes | no | [flickr.people.getPhotos](https://www.flickr.com/services/api/flickr.people.getPhotos.html) |
+| `flickr.people.getPhotosOf` | no | - | GET | yes | no | [flickr.people.getPhotosOf](https://www.flickr.com/services/api/flickr.people.getPhotosOf.html) |
+| `flickr.people.getPublicGroups` | no | - | GET | yes | no | [flickr.people.getPublicGroups](https://www.flickr.com/services/api/flickr.people.getPublicGroups.html) |
+| `flickr.people.getPublicPhotos` | no | - | GET | yes | no | [flickr.people.getPublicPhotos](https://www.flickr.com/services/api/flickr.people.getPublicPhotos.html) |
+| `flickr.people.getUploadStatus` | yes | read | GET | no | no | [flickr.people.getUploadStatus](https://www.flickr.com/services/api/flickr.people.getUploadStatus.html) |
+| `flickr.photos.addTags` | yes | write | POST | no | no | [flickr.photos.addTags](https://www.flickr.com/services/api/flickr.photos.addTags.html) |
+| `flickr.photos.comments.addComment` | yes | write | POST | no | no | [flickr.photos.comments.addComment](https://www.flickr.com/services/api/flickr.photos.comments.addComment.html) |
+| `flickr.photos.comments.deleteComment` | yes | write | POST | no | no | [flickr.photos.comments.deleteComment](https://www.flickr.com/services/api/flickr.photos.comments.deleteComment.html) |
+| `flickr.photos.comments.editComment` | yes | write | POST | no | no | [flickr.photos.comments.editComment](https://www.flickr.com/services/api/flickr.photos.comments.editComment.html) |
+| `flickr.photos.comments.getList` | no | - | GET | yes | no | [flickr.photos.comments.getList](https://www.flickr.com/services/api/flickr.photos.comments.getList.html) |
+| `flickr.photos.comments.getRecentForContacts` | yes | read | GET | no | no | [flickr.photos.comments.getRecentForContacts](https://www.flickr.com/services/api/flickr.photos.comments.getRecentForContacts.html) |
+| `flickr.photos.delete` | yes | delete | POST | no | no | [flickr.photos.delete](https://www.flickr.com/services/api/flickr.photos.delete.html) |
+| `flickr.photos.geo.batchCorrectLocation` | yes | write | POST | no | no | [flickr.photos.geo.batchCorrectLocation](https://www.flickr.com/services/api/flickr.photos.geo.batchCorrectLocation.html) |
+| `flickr.photos.geo.correctLocation` | yes | write | POST | no | no | [flickr.photos.geo.correctLocation](https://www.flickr.com/services/api/flickr.photos.geo.correctLocation.html) |
+| `flickr.photos.geo.getLocation` | no | - | GET | yes | no | [flickr.photos.geo.getLocation](https://www.flickr.com/services/api/flickr.photos.geo.getLocation.html) |
+| `flickr.photos.geo.getPerms` | yes | read | GET | no | no | [flickr.photos.geo.getPerms](https://www.flickr.com/services/api/flickr.photos.geo.getPerms.html) |
+| `flickr.photos.geo.photosForLocation` | yes | read | GET | no | no | [flickr.photos.geo.photosForLocation](https://www.flickr.com/services/api/flickr.photos.geo.photosForLocation.html) |
+| `flickr.photos.geo.removeLocation` | yes | write | POST | no | no | [flickr.photos.geo.removeLocation](https://www.flickr.com/services/api/flickr.photos.geo.removeLocation.html) |
+| `flickr.photos.geo.setContext` | yes | write | POST | no | no | [flickr.photos.geo.setContext](https://www.flickr.com/services/api/flickr.photos.geo.setContext.html) |
+| `flickr.photos.geo.setLocation` | yes | write | POST | no | no | [flickr.photos.geo.setLocation](https://www.flickr.com/services/api/flickr.photos.geo.setLocation.html) |
+| `flickr.photos.geo.setPerms` | yes | write | POST | no | no | [flickr.photos.geo.setPerms](https://www.flickr.com/services/api/flickr.photos.geo.setPerms.html) |
+| `flickr.photos.getAllContexts` | no | - | GET | yes | no | [flickr.photos.getAllContexts](https://www.flickr.com/services/api/flickr.photos.getAllContexts.html) |
+| `flickr.photos.getContactsPhotos` | yes | read | GET | no | no | [flickr.photos.getContactsPhotos](https://www.flickr.com/services/api/flickr.photos.getContactsPhotos.html) |
+| `flickr.photos.getContactsPublicPhotos` | no | - | GET | yes | no | [flickr.photos.getContactsPublicPhotos](https://www.flickr.com/services/api/flickr.photos.getContactsPublicPhotos.html) |
+| `flickr.photos.getContext` | no | - | GET | yes | no | [flickr.photos.getContext](https://www.flickr.com/services/api/flickr.photos.getContext.html) |
+| `flickr.photos.getCounts` | yes | read | GET | no | no | [flickr.photos.getCounts](https://www.flickr.com/services/api/flickr.photos.getCounts.html) |
+| `flickr.photos.getExif` | no | - | GET | yes | no | [flickr.photos.getExif](https://www.flickr.com/services/api/flickr.photos.getExif.html) |
+| `flickr.photos.getFavorites` | no | - | GET | yes | no | [flickr.photos.getFavorites](https://www.flickr.com/services/api/flickr.photos.getFavorites.html) |
+| `flickr.photos.getInfo` | no | - | GET | yes | no | [flickr.photos.getInfo](https://www.flickr.com/services/api/flickr.photos.getInfo.html) |
+| `flickr.photos.getNotInSet` | yes | read | GET | no | no | [flickr.photos.getNotInSet](https://www.flickr.com/services/api/flickr.photos.getNotInSet.html) |
+| `flickr.photos.getPerms` | yes | read | GET | no | no | [flickr.photos.getPerms](https://www.flickr.com/services/api/flickr.photos.getPerms.html) |
+| `flickr.photos.getPopular` | no | - | GET | yes | no | [flickr.photos.getPopular](https://www.flickr.com/services/api/flickr.photos.getPopular.html) |
+| `flickr.photos.getRecent` | no | - | GET | yes | no | [flickr.photos.getRecent](https://www.flickr.com/services/api/flickr.photos.getRecent.html) |
+| `flickr.photos.getSizes` | no | - | GET | yes | no | [flickr.photos.getSizes](https://www.flickr.com/services/api/flickr.photos.getSizes.html) |
+| `flickr.photos.getUntagged` | yes | read | GET | no | no | [flickr.photos.getUntagged](https://www.flickr.com/services/api/flickr.photos.getUntagged.html) |
+| `flickr.photos.getWithGeoData` | yes | read | GET | no | no | [flickr.photos.getWithGeoData](https://www.flickr.com/services/api/flickr.photos.getWithGeoData.html) |
+| `flickr.photos.getWithoutGeoData` | yes | read | GET | no | no | [flickr.photos.getWithoutGeoData](https://www.flickr.com/services/api/flickr.photos.getWithoutGeoData.html) |
+| `flickr.photos.licenses.getAvailable` | no | - | GET | yes | no | [flickr.photos.licenses.getAvailable](https://www.flickr.com/services/api/flickr.photos.licenses.getAvailable.html) |
+| `flickr.photos.licenses.getInfo` | no | - | GET | yes | no | [flickr.photos.licenses.getInfo](https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html) |
+| `flickr.photos.licenses.getLicenseHistory` | no | - | GET | yes | no | [flickr.photos.licenses.getLicenseHistory](https://www.flickr.com/services/api/flickr.photos.licenses.getLicenseHistory.html) |
+| `flickr.photos.licenses.setLicense` | yes | write | POST | no | no | [flickr.photos.licenses.setLicense](https://www.flickr.com/services/api/flickr.photos.licenses.setLicense.html) |
+| `flickr.photos.notes.add` | yes | write | POST | no | no | [flickr.photos.notes.add](https://www.flickr.com/services/api/flickr.photos.notes.add.html) |
+| `flickr.photos.notes.delete` | yes | write | POST | no | no | [flickr.photos.notes.delete](https://www.flickr.com/services/api/flickr.photos.notes.delete.html) |
+| `flickr.photos.notes.edit` | yes | write | POST | no | no | [flickr.photos.notes.edit](https://www.flickr.com/services/api/flickr.photos.notes.edit.html) |
+| `flickr.photos.people.add` | yes | write | POST | no | no | [flickr.photos.people.add](https://www.flickr.com/services/api/flickr.photos.people.add.html) |
+| `flickr.photos.people.delete` | yes | write | POST | no | no | [flickr.photos.people.delete](https://www.flickr.com/services/api/flickr.photos.people.delete.html) |
+| `flickr.photos.people.deleteCoords` | yes | write | POST | no | no | [flickr.photos.people.deleteCoords](https://www.flickr.com/services/api/flickr.photos.people.deleteCoords.html) |
+| `flickr.photos.people.editCoords` | yes | write | POST | no | no | [flickr.photos.people.editCoords](https://www.flickr.com/services/api/flickr.photos.people.editCoords.html) |
+| `flickr.photos.people.getList` | no | - | GET | yes | no | [flickr.photos.people.getList](https://www.flickr.com/services/api/flickr.photos.people.getList.html) |
+| `flickr.photos.recentlyUpdated` | yes | read | GET | no | no | [flickr.photos.recentlyUpdated](https://www.flickr.com/services/api/flickr.photos.recentlyUpdated.html) |
+| `flickr.photos.removeTag` | yes | write | POST | no | no | [flickr.photos.removeTag](https://www.flickr.com/services/api/flickr.photos.removeTag.html) |
+| `flickr.photos.search` | no | - | GET | yes | no | [flickr.photos.search](https://www.flickr.com/services/api/flickr.photos.search.html) |
+| `flickr.photos.setContentType` | yes | write | POST | no | no | [flickr.photos.setContentType](https://www.flickr.com/services/api/flickr.photos.setContentType.html) |
+| `flickr.photos.setDates` | yes | write | POST | no | no | [flickr.photos.setDates](https://www.flickr.com/services/api/flickr.photos.setDates.html) |
+| `flickr.photos.setMeta` | yes | write | POST | no | no | [flickr.photos.setMeta](https://www.flickr.com/services/api/flickr.photos.setMeta.html) |
+| `flickr.photos.setPerms` | yes | write | POST | no | no | [flickr.photos.setPerms](https://www.flickr.com/services/api/flickr.photos.setPerms.html) |
+| `flickr.photos.setSafetyLevel` | yes | write | POST | no | no | [flickr.photos.setSafetyLevel](https://www.flickr.com/services/api/flickr.photos.setSafetyLevel.html) |
+| `flickr.photos.setTags` | yes | write | POST | no | no | [flickr.photos.setTags](https://www.flickr.com/services/api/flickr.photos.setTags.html) |
+| `flickr.photos.suggestions.approveSuggestion` | yes | write | POST | no | no | [flickr.photos.suggestions.approveSuggestion](https://www.flickr.com/services/api/flickr.photos.suggestions.approveSuggestion.html) |
+| `flickr.photos.suggestions.getList` | yes | read | GET | no | no | [flickr.photos.suggestions.getList](https://www.flickr.com/services/api/flickr.photos.suggestions.getList.html) |
+| `flickr.photos.suggestions.rejectSuggestion` | yes | write | POST | no | no | [flickr.photos.suggestions.rejectSuggestion](https://www.flickr.com/services/api/flickr.photos.suggestions.rejectSuggestion.html) |
+| `flickr.photos.suggestions.removeSuggestion` | yes | write | POST | no | no | [flickr.photos.suggestions.removeSuggestion](https://www.flickr.com/services/api/flickr.photos.suggestions.removeSuggestion.html) |
+| `flickr.photos.suggestions.suggestLocation` | yes | write | POST | no | no | [flickr.photos.suggestions.suggestLocation](https://www.flickr.com/services/api/flickr.photos.suggestions.suggestLocation.html) |
+| `flickr.photos.transform.rotate` | yes | write | POST | no | no | [flickr.photos.transform.rotate](https://www.flickr.com/services/api/flickr.photos.transform.rotate.html) |
+| `flickr.photos.upload.checkTickets` | no | - | GET | no | no | [flickr.photos.upload.checkTickets](https://www.flickr.com/services/api/flickr.photos.upload.checkTickets.html) |
+| `flickr.photosets.addPhoto` | yes | write | POST | no | no | [flickr.photosets.addPhoto](https://www.flickr.com/services/api/flickr.photosets.addPhoto.html) |
+| `flickr.photosets.comments.addComment` | yes | write | POST | no | no | [flickr.photosets.comments.addComment](https://www.flickr.com/services/api/flickr.photosets.comments.addComment.html) |
+| `flickr.photosets.comments.deleteComment` | yes | write | POST | no | no | [flickr.photosets.comments.deleteComment](https://www.flickr.com/services/api/flickr.photosets.comments.deleteComment.html) |
+| `flickr.photosets.comments.editComment` | yes | write | POST | no | no | [flickr.photosets.comments.editComment](https://www.flickr.com/services/api/flickr.photosets.comments.editComment.html) |
+| `flickr.photosets.comments.getList` | no | - | GET | yes | no | [flickr.photosets.comments.getList](https://www.flickr.com/services/api/flickr.photosets.comments.getList.html) |
+| `flickr.photosets.create` | yes | write | POST | no | no | [flickr.photosets.create](https://www.flickr.com/services/api/flickr.photosets.create.html) |
+| `flickr.photosets.delete` | yes | write | POST | no | no | [flickr.photosets.delete](https://www.flickr.com/services/api/flickr.photosets.delete.html) |
+| `flickr.photosets.editMeta` | yes | write | POST | no | no | [flickr.photosets.editMeta](https://www.flickr.com/services/api/flickr.photosets.editMeta.html) |
+| `flickr.photosets.editPhotos` | yes | write | POST | no | no | [flickr.photosets.editPhotos](https://www.flickr.com/services/api/flickr.photosets.editPhotos.html) |
+| `flickr.photosets.getContext` | no | - | GET | yes | no | [flickr.photosets.getContext](https://www.flickr.com/services/api/flickr.photosets.getContext.html) |
+| `flickr.photosets.getInfo` | no | - | GET | yes | no | [flickr.photosets.getInfo](https://www.flickr.com/services/api/flickr.photosets.getInfo.html) |
+| `flickr.photosets.getList` | no | - | GET | yes | no | [flickr.photosets.getList](https://www.flickr.com/services/api/flickr.photosets.getList.html) |
+| `flickr.photosets.getPhotos` | no | - | GET | yes | no | [flickr.photosets.getPhotos](https://www.flickr.com/services/api/flickr.photosets.getPhotos.html) |
+| `flickr.photosets.orderSets` | yes | write | POST | no | no | [flickr.photosets.orderSets](https://www.flickr.com/services/api/flickr.photosets.orderSets.html) |
+| `flickr.photosets.removePhoto` | yes | write | POST | no | no | [flickr.photosets.removePhoto](https://www.flickr.com/services/api/flickr.photosets.removePhoto.html) |
+| `flickr.photosets.removePhotos` | yes | write | POST | no | no | [flickr.photosets.removePhotos](https://www.flickr.com/services/api/flickr.photosets.removePhotos.html) |
+| `flickr.photosets.reorderPhotos` | yes | write | POST | no | no | [flickr.photosets.reorderPhotos](https://www.flickr.com/services/api/flickr.photosets.reorderPhotos.html) |
+| `flickr.photosets.setPrimaryPhoto` | yes | write | POST | no | no | [flickr.photosets.setPrimaryPhoto](https://www.flickr.com/services/api/flickr.photosets.setPrimaryPhoto.html) |
+| `flickr.places.find` | no | - | GET | yes | no | [flickr.places.find](https://www.flickr.com/services/api/flickr.places.find.html) |
+| `flickr.places.findByLatLon` | no | - | GET | yes | no | [flickr.places.findByLatLon](https://www.flickr.com/services/api/flickr.places.findByLatLon.html) |
+| `flickr.places.getChildrenWithPhotosPublic` | no | - | GET | yes | no | [flickr.places.getChildrenWithPhotosPublic](https://www.flickr.com/services/api/flickr.places.getChildrenWithPhotosPublic.html) |
+| `flickr.places.getInfo` | no | - | GET | yes | no | [flickr.places.getInfo](https://www.flickr.com/services/api/flickr.places.getInfo.html) |
+| `flickr.places.getInfoByUrl` | no | - | GET | yes | no | [flickr.places.getInfoByUrl](https://www.flickr.com/services/api/flickr.places.getInfoByUrl.html) |
+| `flickr.places.getPlaceTypes` | no | - | GET | yes | no | [flickr.places.getPlaceTypes](https://www.flickr.com/services/api/flickr.places.getPlaceTypes.html) |
+| `flickr.places.getShapeHistory` | no | - | GET | yes | no | [flickr.places.getShapeHistory](https://www.flickr.com/services/api/flickr.places.getShapeHistory.html) |
+| `flickr.places.getTopPlacesList` | no | - | GET | yes | no | [flickr.places.getTopPlacesList](https://www.flickr.com/services/api/flickr.places.getTopPlacesList.html) |
+| `flickr.places.placesForBoundingBox` | no | - | GET | yes | no | [flickr.places.placesForBoundingBox](https://www.flickr.com/services/api/flickr.places.placesForBoundingBox.html) |
+| `flickr.places.placesForContacts` | yes | read | GET | no | no | [flickr.places.placesForContacts](https://www.flickr.com/services/api/flickr.places.placesForContacts.html) |
+| `flickr.places.placesForTags` | no | - | GET | yes | no | [flickr.places.placesForTags](https://www.flickr.com/services/api/flickr.places.placesForTags.html) |
+| `flickr.places.placesForUser` | yes | read | GET | no | no | [flickr.places.placesForUser](https://www.flickr.com/services/api/flickr.places.placesForUser.html) |
+| `flickr.places.resolvePlaceId` | no | - | GET | yes | no | [flickr.places.resolvePlaceId](https://www.flickr.com/services/api/flickr.places.resolvePlaceId.html) |
+| `flickr.places.resolvePlaceURL` | no | - | GET | yes | no | [flickr.places.resolvePlaceURL](https://www.flickr.com/services/api/flickr.places.resolvePlaceURL.html) |
+| `flickr.places.tagsForPlace` | no | - | GET | yes | no | [flickr.places.tagsForPlace](https://www.flickr.com/services/api/flickr.places.tagsForPlace.html) |
+| `flickr.prefs.getContentType` | yes | read | GET | no | no | [flickr.prefs.getContentType](https://www.flickr.com/services/api/flickr.prefs.getContentType.html) |
+| `flickr.prefs.getGeoPerms` | yes | read | GET | no | no | [flickr.prefs.getGeoPerms](https://www.flickr.com/services/api/flickr.prefs.getGeoPerms.html) |
+| `flickr.prefs.getHidden` | yes | read | GET | no | no | [flickr.prefs.getHidden](https://www.flickr.com/services/api/flickr.prefs.getHidden.html) |
+| `flickr.prefs.getPrivacy` | yes | read | GET | no | no | [flickr.prefs.getPrivacy](https://www.flickr.com/services/api/flickr.prefs.getPrivacy.html) |
+| `flickr.prefs.getSafetyLevel` | yes | read | GET | no | no | [flickr.prefs.getSafetyLevel](https://www.flickr.com/services/api/flickr.prefs.getSafetyLevel.html) |
+| `flickr.profile.getProfile` | no | - | GET | yes | no | [flickr.profile.getProfile](https://www.flickr.com/services/api/flickr.profile.getProfile.html) |
+| `flickr.push.getSubscriptions` | yes | read | GET | no | yes | [flickr.push.getSubscriptions](https://www.flickr.com/services/api/flickr.push.getSubscriptions.html) |
+| `flickr.push.getTopics` | no | - | GET | yes | yes | [flickr.push.getTopics](https://www.flickr.com/services/api/flickr.push.getTopics.html) |
+| `flickr.push.subscribe` | yes | read | GET | no | yes | [flickr.push.subscribe](https://www.flickr.com/services/api/flickr.push.subscribe.html) |
+| `flickr.push.unsubscribe` | yes | read | GET | no | yes | [flickr.push.unsubscribe](https://www.flickr.com/services/api/flickr.push.unsubscribe.html) |
+| `flickr.reflection.getMethodInfo` | no | - | GET | yes | no | [flickr.reflection.getMethodInfo](https://www.flickr.com/services/api/flickr.reflection.getMethodInfo.html) |
+| `flickr.reflection.getMethods` | no | - | GET | yes | no | [flickr.reflection.getMethods](https://www.flickr.com/services/api/flickr.reflection.getMethods.html) |
+| `flickr.stats.getCSVFiles` | yes | read | GET | no | no | [flickr.stats.getCSVFiles](https://www.flickr.com/services/api/flickr.stats.getCSVFiles.html) |
+| `flickr.stats.getCollectionDomains` | yes | read | GET | no | no | [flickr.stats.getCollectionDomains](https://www.flickr.com/services/api/flickr.stats.getCollectionDomains.html) |
+| `flickr.stats.getCollectionReferrers` | yes | read | GET | no | no | [flickr.stats.getCollectionReferrers](https://www.flickr.com/services/api/flickr.stats.getCollectionReferrers.html) |
+| `flickr.stats.getCollectionStats` | yes | read | GET | no | no | [flickr.stats.getCollectionStats](https://www.flickr.com/services/api/flickr.stats.getCollectionStats.html) |
+| `flickr.stats.getMostPopularPhotoDateRange` | yes | read | GET | no | no | [flickr.stats.getMostPopularPhotoDateRange](https://www.flickr.com/services/api/flickr.stats.getMostPopularPhotoDateRange.html) |
+| `flickr.stats.getPhotoDomains` | yes | read | GET | no | no | [flickr.stats.getPhotoDomains](https://www.flickr.com/services/api/flickr.stats.getPhotoDomains.html) |
+| `flickr.stats.getPhotoReferrers` | yes | read | GET | no | no | [flickr.stats.getPhotoReferrers](https://www.flickr.com/services/api/flickr.stats.getPhotoReferrers.html) |
+| `flickr.stats.getPhotoStats` | yes | read | GET | no | no | [flickr.stats.getPhotoStats](https://www.flickr.com/services/api/flickr.stats.getPhotoStats.html) |
+| `flickr.stats.getPhotosetDomains` | yes | read | GET | no | no | [flickr.stats.getPhotosetDomains](https://www.flickr.com/services/api/flickr.stats.getPhotosetDomains.html) |
+| `flickr.stats.getPhotosetReferrers` | yes | read | GET | no | no | [flickr.stats.getPhotosetReferrers](https://www.flickr.com/services/api/flickr.stats.getPhotosetReferrers.html) |
+| `flickr.stats.getPhotosetStats` | yes | read | GET | no | no | [flickr.stats.getPhotosetStats](https://www.flickr.com/services/api/flickr.stats.getPhotosetStats.html) |
+| `flickr.stats.getPhotostreamDomains` | yes | read | GET | no | no | [flickr.stats.getPhotostreamDomains](https://www.flickr.com/services/api/flickr.stats.getPhotostreamDomains.html) |
+| `flickr.stats.getPhotostreamReferrers` | yes | read | GET | no | no | [flickr.stats.getPhotostreamReferrers](https://www.flickr.com/services/api/flickr.stats.getPhotostreamReferrers.html) |
+| `flickr.stats.getPhotostreamStats` | yes | read | GET | no | no | [flickr.stats.getPhotostreamStats](https://www.flickr.com/services/api/flickr.stats.getPhotostreamStats.html) |
+| `flickr.stats.getPopularPhotos` | yes | read | GET | no | no | [flickr.stats.getPopularPhotos](https://www.flickr.com/services/api/flickr.stats.getPopularPhotos.html) |
+| `flickr.stats.getTotalViews` | yes | read | GET | no | no | [flickr.stats.getTotalViews](https://www.flickr.com/services/api/flickr.stats.getTotalViews.html) |
+| `flickr.tags.getClusterPhotos` | no | - | GET | yes | no | [flickr.tags.getClusterPhotos](https://www.flickr.com/services/api/flickr.tags.getClusterPhotos.html) |
+| `flickr.tags.getClusters` | no | - | GET | yes | no | [flickr.tags.getClusters](https://www.flickr.com/services/api/flickr.tags.getClusters.html) |
+| `flickr.tags.getHotList` | no | - | GET | yes | no | [flickr.tags.getHotList](https://www.flickr.com/services/api/flickr.tags.getHotList.html) |
+| `flickr.tags.getListPhoto` | no | - | GET | yes | no | [flickr.tags.getListPhoto](https://www.flickr.com/services/api/flickr.tags.getListPhoto.html) |
+| `flickr.tags.getListUser` | no | - | GET | yes | no | [flickr.tags.getListUser](https://www.flickr.com/services/api/flickr.tags.getListUser.html) |
+| `flickr.tags.getListUserPopular` | no | - | GET | yes | no | [flickr.tags.getListUserPopular](https://www.flickr.com/services/api/flickr.tags.getListUserPopular.html) |
+| `flickr.tags.getListUserRaw` | no | - | GET | yes | no | [flickr.tags.getListUserRaw](https://www.flickr.com/services/api/flickr.tags.getListUserRaw.html) |
+| `flickr.tags.getMostFrequentlyUsed` | yes | read | GET | no | no | [flickr.tags.getMostFrequentlyUsed](https://www.flickr.com/services/api/flickr.tags.getMostFrequentlyUsed.html) |
+| `flickr.tags.getRelated` | no | - | GET | yes | no | [flickr.tags.getRelated](https://www.flickr.com/services/api/flickr.tags.getRelated.html) |
+| `flickr.test.echo` | no | - | GET | yes | no | [flickr.test.echo](https://www.flickr.com/services/api/flickr.test.echo.html) |
+| `flickr.test.login` | yes | read | GET | no | no | [flickr.test.login](https://www.flickr.com/services/api/flickr.test.login.html) |
+| `flickr.test.null` | yes | read | GET | no | no | [flickr.test.null](https://www.flickr.com/services/api/flickr.test.null.html) |
+| `flickr.testimonials.addTestimonial` | yes | write | POST | no | no | [flickr.testimonials.addTestimonial](https://www.flickr.com/services/api/flickr.testimonials.addTestimonial.html) |
+| `flickr.testimonials.approveTestimonial` | yes | write | POST | no | no | [flickr.testimonials.approveTestimonial](https://www.flickr.com/services/api/flickr.testimonials.approveTestimonial.html) |
+| `flickr.testimonials.deleteTestimonial` | yes | write | POST | no | no | [flickr.testimonials.deleteTestimonial](https://www.flickr.com/services/api/flickr.testimonials.deleteTestimonial.html) |
+| `flickr.testimonials.editTestimonial` | yes | write | POST | no | no | [flickr.testimonials.editTestimonial](https://www.flickr.com/services/api/flickr.testimonials.editTestimonial.html) |
+| `flickr.testimonials.getAllTestimonialsAbout` | yes | read | GET | no | no | [flickr.testimonials.getAllTestimonialsAbout](https://www.flickr.com/services/api/flickr.testimonials.getAllTestimonialsAbout.html) |
+| `flickr.testimonials.getAllTestimonialsAboutBy` | yes | read | GET | no | no | [flickr.testimonials.getAllTestimonialsAboutBy](https://www.flickr.com/services/api/flickr.testimonials.getAllTestimonialsAboutBy.html) |
+| `flickr.testimonials.getAllTestimonialsBy` | yes | read | GET | no | no | [flickr.testimonials.getAllTestimonialsBy](https://www.flickr.com/services/api/flickr.testimonials.getAllTestimonialsBy.html) |
+| `flickr.testimonials.getPendingTestimonialsAbout` | yes | read | GET | no | no | [flickr.testimonials.getPendingTestimonialsAbout](https://www.flickr.com/services/api/flickr.testimonials.getPendingTestimonialsAbout.html) |
+| `flickr.testimonials.getPendingTestimonialsAboutBy` | yes | read | GET | no | no | [flickr.testimonials.getPendingTestimonialsAboutBy](https://www.flickr.com/services/api/flickr.testimonials.getPendingTestimonialsAboutBy.html) |
+| `flickr.testimonials.getPendingTestimonialsBy` | yes | read | GET | no | no | [flickr.testimonials.getPendingTestimonialsBy](https://www.flickr.com/services/api/flickr.testimonials.getPendingTestimonialsBy.html) |
+| `flickr.testimonials.getTestimonialsAbout` | no | - | GET | yes | no | [flickr.testimonials.getTestimonialsAbout](https://www.flickr.com/services/api/flickr.testimonials.getTestimonialsAbout.html) |
+| `flickr.testimonials.getTestimonialsAboutBy` | yes | read | GET | no | no | [flickr.testimonials.getTestimonialsAboutBy](https://www.flickr.com/services/api/flickr.testimonials.getTestimonialsAboutBy.html) |
+| `flickr.testimonials.getTestimonialsBy` | no | - | GET | yes | no | [flickr.testimonials.getTestimonialsBy](https://www.flickr.com/services/api/flickr.testimonials.getTestimonialsBy.html) |
+| `flickr.urls.getGroup` | no | - | GET | yes | no | [flickr.urls.getGroup](https://www.flickr.com/services/api/flickr.urls.getGroup.html) |
+| `flickr.urls.getUserPhotos` | no | - | GET | yes | no | [flickr.urls.getUserPhotos](https://www.flickr.com/services/api/flickr.urls.getUserPhotos.html) |
+| `flickr.urls.getUserProfile` | no | - | GET | yes | no | [flickr.urls.getUserProfile](https://www.flickr.com/services/api/flickr.urls.getUserProfile.html) |
+| `flickr.urls.lookupGallery` | no | - | GET | yes | no | [flickr.urls.lookupGallery](https://www.flickr.com/services/api/flickr.urls.lookupGallery.html) |
+| `flickr.urls.lookupGroup` | no | - | GET | yes | no | [flickr.urls.lookupGroup](https://www.flickr.com/services/api/flickr.urls.lookupGroup.html) |
+| `flickr.urls.lookupUser` | no | - | GET | yes | no | [flickr.urls.lookupUser](https://www.flickr.com/services/api/flickr.urls.lookupUser.html) |

@@ -5,7 +5,7 @@ GitHub About metadata should identify this as a framework-agnostic PHP Flickr SD
 Suggested description:
 
 ```text
-Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, and DTO-first workflows.
+Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, typed response helpers, and raw fallback.
 ```
 
 Suggested topics:
@@ -18,7 +18,7 @@ Manual update command:
 
 ```bash
 gh repo edit jooservices/flickr \
-  --description "Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, and DTO-first workflows." \
+  --description "Framework-agnostic PHP 8.5+ SDK for Flickr REST API, OAuth 1.0a, upload, replace, typed response helpers, and raw fallback." \
   --add-topic php \
   --add-topic php85 \
   --add-topic flickr \

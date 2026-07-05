@@ -5,16 +5,35 @@ declare(strict_types=1);
 namespace JOOservices\Flickr\Services;
 
 use JOOservices\Flickr\Contracts\Services\PlacesServiceContract;
+use JOOservices\Flickr\Contracts\Services\RawApiServiceContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Places\PlaceData;
+use JOOservices\Flickr\Hydrators\PlaceHydrator;
 
 final class PlacesService extends AbstractRawService implements PlacesServiceContract
 {
+    public function __construct(
+        RawApiServiceContract $raw,
+        private PlaceHydrator $hydrator = new PlaceHydrator,
+    ) {
+        parent::__construct($raw);
+    }
+
     /**
      * @param  array<string, mixed>  $parameters
      */
     public function find(array $parameters = []): ApiResponseData
     {
         return $this->callRaw('flickr.places.find', $parameters);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parameters
+     * @return list<PlaceData>
+     */
+    public function findData(array $parameters = []): array
+    {
+        return $this->hydrator->places($this->find($parameters));
     }
 
     /**
@@ -39,6 +58,14 @@ final class PlacesService extends AbstractRawService implements PlacesServiceCon
     public function getInfo(array $parameters = []): ApiResponseData
     {
         return $this->callRaw('flickr.places.getInfo', $parameters);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parameters
+     */
+    public function getInfoData(array $parameters = []): PlaceData
+    {
+        return $this->hydrator->place($this->getInfo($parameters));
     }
 
     /**

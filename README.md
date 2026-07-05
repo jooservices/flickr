@@ -1,7 +1,11 @@
 # JOOservices Flickr SDK
 
 [![CI](https://github.com/jooservices/flickr/actions/workflows/ci.yml/badge.svg)](https://github.com/jooservices/flickr/actions/workflows/ci.yml)
-![PHP](https://img.shields.io/badge/PHP-%3E%3D8.5-777bb4)
+[![codecov](https://codecov.io/gh/jooservices/flickr/graph/badge.svg)](https://codecov.io/gh/jooservices/flickr)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/flickr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/flickr)
+[![PHP](https://img.shields.io/badge/PHP-%3E%3D8.5-777bb4)](https://www.php.net/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Packagist Version](https://img.shields.io/packagist/v/jooservices/flickr)](https://packagist.org/packages/jooservices/flickr)
 
 `jooservices/flickr` is a pure PHP, framework-agnostic Flickr SDK for PHP 8.5+. It is not a Laravel package and intentionally does not ship service providers, facades, routes, migrations, config publishing, or Artisan commands.
 
@@ -11,7 +15,7 @@ Current coverage:
 
 - all 224 official REST API methods from the Flickr API index have method-registry entries;
 - all 224 official REST API methods have service wrapper methods;
-- core workflows also have friendlier DTO-first wrappers where useful;
+- core workflows have typed request DTOs and typed response helpers for priority methods;
 - raw fallback remains available for custom parameters and future methods.
 
 ## Install
@@ -30,6 +34,7 @@ $flickr = FlickrFactory::make(FlickrConfig::from([
     'apiKey' => $_ENV['FLICKR_API_KEY'],
     'apiSecret' => $_ENV['FLICKR_API_SECRET'],
     'callbackUrl' => $_ENV['FLICKR_CALLBACK_URL'] ?? null,
+    'retryTimes' => 2,
 ]));
 ```
 
@@ -58,6 +63,23 @@ foreach ($flickr->photos()->searchPages(
 ) as $page) {
     // $page is ApiResponseData
 }
+```
+
+Priority methods also expose typed `*Data()` helpers backed by hydrators:
+
+```php
+$searchResult = $flickr->photos()->searchData(SearchPhotosData::from(['text' => 'sunset']));
+$photo = $flickr->photos()->getInfoData('123456');
+$person = $flickr->people()->getInfoData('12345678@N00');
+```
+
+Build Flickr image URLs from photo metadata:
+
+```php
+use JOOservices\Flickr\Enums\PhotoSize;
+use JOOservices\Flickr\Support\PhotoUrlBuilder;
+
+$url = PhotoUrlBuilder::forPhoto($photo)->url(PhotoSize::Medium640);
 ```
 
 ## Raw API Fallback
@@ -104,8 +126,11 @@ use JOOservices\Flickr\Enums\AuthPermission;
 $requestToken = $flickr->auth()->requestToken(AuthPermission::Write);
 $authorizationUrl = $flickr->auth()->authorizationUrl($requestToken, AuthPermission::Write);
 
+// Persist the request token secret between the redirect legs (e.g. in session storage).
+$requestTokenSecret = $requestToken->oauthTokenSecret;
+
 // After Flickr redirects back with oauth_token and oauth_verifier:
-$accessToken = $flickr->auth()->accessToken($oauthToken, $oauthVerifier);
+$accessToken = $flickr->auth()->accessToken($oauthToken, $oauthVerifier, $requestTokenSecret);
 $flickr->tokens()->put($accessToken);
 ```
 
@@ -146,7 +171,7 @@ Upload and replace require OAuth write permission. Delete requires delete permis
 
 ## Error Handling
 
-Normal API responses are mapped to `ApiResponseData`. Flickr `stat=fail` responses return `ok=false` with `ApiErrorData` unless request options set `throwOnApiError`. Malformed, empty, or structurally invalid responses throw `InvalidResponseException`. Transport failures throw `TransportException`.
+Normal API responses are mapped to `ApiResponseData`. Flickr `stat=fail` responses return `ok=false` with `ApiErrorData` unless request options set `throwOnApiError`. Malformed, empty, or structurally invalid responses throw `InvalidResponseException`. Transport failures throw `TransportException`. Rate-limit and authorization failures throw `RateLimitException` and `AuthorizationException` respectively when Flickr or the transport signals those conditions.
 
 ## Cache
 
@@ -174,7 +199,10 @@ Normal tests do not call Flickr:
 ```bash
 composer test
 composer lint:all
+composer verify:registry
+composer verify:api-index
 composer check
+composer ci
 ```
 
 Use the public fake transport to test application code without network calls:

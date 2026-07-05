@@ -13,12 +13,15 @@ use JOOservices\Flickr\Contracts\Cache\FlickrCacheContract;
 use JOOservices\Flickr\Contracts\Client\FlickrClientContract;
 use JOOservices\Flickr\Contracts\Client\FlickrTransportContract;
 use JOOservices\Flickr\DTO\Common\ApiResponseData;
+use JOOservices\Flickr\DTO\Common\RawResponseData;
 use JOOservices\Flickr\DTO\Common\RequestOptionsData;
 use JOOservices\Flickr\Enums\CachePolicy;
 use JOOservices\Flickr\Enums\HttpMethod;
 use JOOservices\Flickr\Enums\ResponseFormat;
 use JOOservices\Flickr\Exceptions\ApiException;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
+use JOOservices\Flickr\Exceptions\AuthorizationException;
+use JOOservices\Flickr\Exceptions\RateLimitException;
 use JOOservices\Flickr\Metadata\FlickrMethodDefinition;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Support\ParameterNormalizer;
@@ -58,6 +61,8 @@ final class FlickrClient implements FlickrClientContract
             $this->config->restEndpoint,
             $this->transportOptions($definition, $parameters),
         );
+        $this->checkRateLimit($raw);
+
         $response = $this->parser->parseApi($raw);
 
         if ($cacheKey !== null && $response->ok) {
@@ -65,7 +70,7 @@ final class FlickrClient implements FlickrClientContract
         }
 
         if (! $response->ok && $options->throwOnApiError) {
-            throw new ApiException($response->error->message);
+            $this->handleApiError($response);
         }
 
         return $response;
@@ -143,9 +148,52 @@ final class FlickrClient implements FlickrClientContract
             return false;
         }
 
-        return $definition->cacheable
-            && $definition->httpMethod === HttpMethod::Get
-            && ! $definition->requiresAuth
-            && ! $options->authenticated;
+        if ($definition->httpMethod !== HttpMethod::Get || $definition->requiresAuth || $options->authenticated) {
+            return false;
+        }
+
+        if ($options->cache === CachePolicy::Enabled) {
+            return true;
+        }
+
+        return $definition->cacheable;
+    }
+
+    private function checkRateLimit(RawResponseData $raw): void
+    {
+        if ($raw->statusCode !== 429) {
+            return;
+        }
+
+        $retryAfter = $this->retryAfterHeader($raw->headers);
+
+        throw new RateLimitException('Flickr rate limit exceeded.', $retryAfter);
+    }
+
+    private function handleApiError(ApiResponseData $response): void
+    {
+        $error = $response->error;
+        $errCode = $error !== null ? $error->code : null;
+        $errMsg = $error !== null ? $error->message : 'Flickr API request failed.';
+
+        if ($errCode !== null && in_array($errCode, [96, 97, 98, 99], true)) {
+            throw new AuthorizationException($errMsg, $errCode);
+        }
+
+        throw new ApiException($errMsg, $errCode);
+    }
+
+    /**
+     * @param  array<string, list<string>>  $headers
+     */
+    private function retryAfterHeader(array $headers): ?int
+    {
+        foreach ($headers as $name => $values) {
+            if (strcasecmp($name, 'Retry-After') === 0 && isset($values[0])) {
+                return (int) $values[0];
+            }
+        }
+
+        return null;
     }
 }

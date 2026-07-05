@@ -9,7 +9,7 @@ Before editing, identify the owning area:
 - REST methods: `src/Services`, `src/Contracts/Services`, `src/Metadata/methods.php`
 - upload and replace: `src/Client/FlickrUploadClient.php`, `src/Services/UploadService.php`, upload DTOs
 - transport: `src/Client/JooClientTransport.php` and client contracts
-- DTOs and mappers: `src/DTO` and `src/Mappers`
-- verification: `tests`, `tests/Fixtures`, and `tools/verify-method-registry.php`
+- DTOs and hydrators: `src/DTO` and `src/Hydrators`
+- verification: `tests`, `tests/Fixtures`, `composer verify:registry`, and `composer verify:api-index`
 
 If requirements conflict with repository code, official Flickr docs, package scope, or test safety, stop and ask.

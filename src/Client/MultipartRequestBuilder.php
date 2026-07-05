@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Client;
 
+use JOOservices\Flickr\Exceptions\UploadException;
+
+/**
+ * @internal
+ */
 final class MultipartRequestBuilder
 {
     /**
@@ -18,9 +23,15 @@ final class MultipartRequestBuilder
             $multipart[] = ['name' => $name, 'contents' => (string) $value];
         }
 
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            throw new UploadException("Unable to open upload file at {$path}.");
+        }
+
         $multipart[] = [
             'name' => 'photo',
-            'contents' => fopen($path, 'rb'),
+            'contents' => $handle,
             'filename' => basename($path),
         ];
 

@@ -71,6 +71,19 @@ final class OAuthTest extends TestCase
         $this->assertSame('viet', $accessToken->username);
     }
 
+    public function test_request_token_defaults_oauth_callback_to_oob_when_no_callback_url(): void
+    {
+        $transport = new FakeTransport;
+        $transport->push('oauth_callback_confirmed=true&oauth_token=req&oauth_token_secret=req-secret');
+        $config = new FlickrConfig('key', 'secret');
+        $auth = new OAuth1Authenticator($config, new OAuth1Signer($config), $transport);
+
+        $auth->requestToken(AuthPermission::Read);
+
+        $query = $transport->requests[0]['options']['query'];
+        $this->assertSame('oob', $query['oauth_callback']);
+    }
+
     public function test_authenticator_rejects_missing_verifier_and_token_store_round_trip(): void
     {
         $store = new InMemoryTokenStore;
@@ -109,6 +122,9 @@ final class OAuthTest extends TestCase
             $store->put($token);
 
             $this->assertFileExists($path);
+            if (PHP_OS_FAMILY !== 'Windows') {
+                $this->assertSame('600', decoct(fileperms($path) & 0777));
+            }
             $this->assertEquals($token, $store->get());
 
             $store->forget();
@@ -124,6 +140,20 @@ final class OAuthTest extends TestCase
     {
         $path = sys_get_temp_dir().'/flickr-token-scalar-'.bin2hex(random_bytes(4)).'.json';
         file_put_contents($path, '"token"');
+
+        $this->expectException(TokenStorageException::class);
+
+        try {
+            (new FileTokenStore($path))->get();
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_file_token_store_rejects_invalid_access_token_shape(): void
+    {
+        $path = sys_get_temp_dir().'/flickr-token-shape-'.bin2hex(random_bytes(4)).'.json';
+        file_put_contents($path, '{"foo":1}');
 
         $this->expectException(TokenStorageException::class);
 

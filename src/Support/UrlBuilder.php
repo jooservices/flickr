@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Support;
 
+/**
+ * @internal
+ */
 final class UrlBuilder
 {
     /**
