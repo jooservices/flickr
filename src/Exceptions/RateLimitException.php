@@ -14,7 +14,14 @@ final class RateLimitException extends ApiException
         int $code = 0,
         ?Throwable $previous = null,
     ) {
-        parent::__construct($message, null, $code, $previous);
+        parent::__construct(
+            $message,
+            null,
+            $code,
+            $previous,
+            httpStatus: 429,
+            retryable: true,
+        );
     }
 
     public function retryAfter(): ?int

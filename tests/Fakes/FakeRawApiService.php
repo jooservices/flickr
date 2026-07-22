@@ -15,11 +15,16 @@ final class FakeRawApiService implements RawApiServiceContract
      */
     public array $calls = [];
 
+    public int $callCount = 0;
+
+    public function __construct(private ?ApiResponseData $response = null) {}
+
     public function call(string $method, array $parameters = [], ?RequestOptionsData $options = null): ApiResponseData
     {
+        $this->callCount++;
         $this->calls[] = compact('method', 'parameters', 'options');
 
-        return new ApiResponseData(true, ['stat' => 'ok']);
+        return $this->response ?? new ApiResponseData(true, ['stat' => 'ok']);
     }
 
     /**

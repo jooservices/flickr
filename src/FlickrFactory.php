@@ -7,6 +7,7 @@ namespace JOOservices\Flickr;
 use JOOservices\Flickr\Auth\InMemoryTokenStore;
 use JOOservices\Flickr\Auth\OAuth1Authenticator;
 use JOOservices\Flickr\Auth\OAuth1Signer;
+use JOOservices\Flickr\Cache\NullCache;
 use JOOservices\Flickr\Client\FlickrClient;
 use JOOservices\Flickr\Client\FlickrUploadClient;
 use JOOservices\Flickr\Client\JooClientTransport;
@@ -57,6 +58,7 @@ use JOOservices\Flickr\Services\TestimonialsService;
 use JOOservices\Flickr\Services\TestService;
 use JOOservices\Flickr\Services\UploadService;
 use JOOservices\Flickr\Services\UrlsService;
+use JOOservices\Flickr\Upload\CachedUploadLimitResolver;
 
 final class FlickrFactory
 {
@@ -73,8 +75,15 @@ final class FlickrFactory
         $client = $cache === null
             ? new FlickrClient($config, $transport, $signer, $tokenStore, $registry)
             : new FlickrClient($config, $transport, $signer, $tokenStore, $registry, cache: $cache);
-        $uploadClient = new FlickrUploadClient($config, $transport, $signer, $tokenStore);
         $raw = new RawApiService($client);
+        $uploadLimitResolver = new CachedUploadLimitResolver($raw, $cache ?? new NullCache);
+        $uploadClient = new FlickrUploadClient(
+            $config,
+            $transport,
+            $signer,
+            $tokenStore,
+            uploadLimitResolver: $uploadLimitResolver,
+        );
 
         return new Flickr(
             raw: $raw,
@@ -121,6 +130,7 @@ final class FlickrFactory
             test: new TestService($raw),
             testimonials: new TestimonialsService($raw),
             urls: new UrlsService($raw),
+            registry: $registry,
         );
     }
 }

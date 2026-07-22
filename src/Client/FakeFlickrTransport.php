@@ -6,8 +6,14 @@ namespace JOOservices\Flickr\Client;
 
 use JOOservices\Flickr\Contracts\Client\FlickrTransportContract;
 use JOOservices\Flickr\DTO\Common\RawResponseData;
+use JOOservices\Flickr\Testing\FlickrFake;
 use RuntimeException;
 
+/**
+ * Low-level transport fake for SDK unit tests.
+ *
+ * @deprecated Prefer {@see FlickrFake} for consumer application tests.
+ */
 final class FakeFlickrTransport implements FlickrTransportContract
 {
     /**

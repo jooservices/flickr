@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\DTO\Common;
 
+use InvalidArgumentException;
 use JOOservices\Dto\Core\Dto;
 use JOOservices\Flickr\Enums\CachePolicy;
 
@@ -14,5 +15,10 @@ final class RequestOptionsData extends Dto
         public CachePolicy $cache = CachePolicy::Default,
         public ?int $cacheTtl = null,
         public bool $throwOnApiError = false,
-    ) {}
+        public ?int $timeoutSeconds = null,
+    ) {
+        if ($this->timeoutSeconds !== null && $this->timeoutSeconds < 1) {
+            throw new InvalidArgumentException('Request timeout must be at least 1 second.');
+        }
+    }
 }

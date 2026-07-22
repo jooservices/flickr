@@ -2,6 +2,32 @@
 
 GitHub Actions runs on `master` and `develop` pushes and pull requests. Normal CI sets `FLICKR_REAL_TESTS=false`; real Flickr credentials must never be required for pull request validation.
 
+## Default branch and protection
+
+- **Default branch:** `master` (same as `jooservices/dto`)
+- **Integration branch:** `develop` — feature and fix PRs target this branch
+- **Release branch:** `master` — release and hotfix PRs target this branch
+
+The repository ruleset **`develop & master`** protects both branches and requires:
+
+- pull requests (no direct pushes)
+- linear history (no merge commits on protected branches)
+- up-to-date branches before merge (`strict_required_status_checks_policy: true`)
+- these GitHub Actions checks:
+  - `Security Checks`
+  - `Lint - Pint`
+  - `Lint - PHPCS`
+  - `Lint - PHPStan`
+  - `Lint - PHPMD`
+  - `Lint - PHP-CS-Fixer`
+  - `Lint - Registry`
+  - `Lint - API Index`
+  - `Tests & Coverage`
+
+Optional workflows such as `scorecard.yml`, `secret-scanning.yml`, `semantic-pr.yml`, and `registry-drift.yml` may run on some events but are not part of the required ruleset.
+
+Organization admins can bypass the ruleset when needed (for example, emergency backmerges).
+
 ## Workflows
 
 | Workflow | Purpose |
@@ -30,7 +56,7 @@ composer check
 composer ci
 ```
 
-`composer ci` adds `composer test:coverage`. CI enforces a minimum **95%** statement coverage threshold.
+`composer ci` adds `composer test:coverage` and `composer verify:smoke`. CI enforces a minimum **95%** statement coverage threshold and runs the consumer smoke test as a lint-matrix job.
 
 ## Required secrets
 

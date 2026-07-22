@@ -16,4 +16,16 @@ final class JooClientTransportTest extends TestCase
 
         $this->assertInstanceOf(JooClientTransport::class, $transport);
     }
+
+    public function test_from_config_builds_with_circuit_breaker_and_rate_limit_disabled(): void
+    {
+        $transport = JooClientTransport::fromConfig(new FlickrConfig(
+            'key',
+            'secret',
+            enableCircuitBreaker: false,
+            enableRateLimit: false,
+        ));
+
+        $this->assertInstanceOf(JooClientTransport::class, $transport);
+    }
 }
