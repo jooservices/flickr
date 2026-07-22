@@ -48,6 +48,7 @@ REST flow:
 - `src/Pagination`: generic lazy pagination helpers.
 - `src/Services`: Flickr service wrappers and raw fallback.
 - `src/Support`: normalization, signing helpers, URL builders, and file support.
+- `src/Upload`: upload ticket polling and cached upload-limit helpers.
 - `tests`: unit, integration, fixtures, and fakes.
 - `docs`: architecture, getting started, user guide, examples, development, maintenance.
 - `examples`: manually runnable scripts.

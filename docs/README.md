@@ -45,8 +45,9 @@ Official Flickr API docs remain the source of truth: https://www.flickr.com/serv
 - [Replace Photo](03-examples/05-replace-photo.md)
 - [Poll Upload Ticket](03-examples/06-poll-upload-ticket.md)
 - [Call Raw Method](03-examples/07-call-raw-method.md)
-- [Mock Transport](03-examples/08-mock-transport.md)
+- [Mock Transport / FlickrFake](03-examples/08-mock-transport.md)
 - [Custom Cache](03-examples/09-custom-cache.md)
+- [Describe Method](03-examples/10-describe-method.md)
 
 ## Development
 
@@ -64,3 +65,6 @@ Official Flickr API docs remain the source of truth: https://www.flickr.com/serv
 
 - [Risks, Legacy, And Gaps](05-maintenance/01-risks-legacy-and-gaps.md)
 - [Docs Changelog](05-maintenance/02-docs-changelog.md)
+- [v2.0.0 Roadmap](05-maintenance/03-v2-roadmap.md)
+- [v1 to v2 Migration](05-maintenance/04-v1-to-v2-migration.md)
+- [Deprecation Policy](05-maintenance/05-deprecation-policy.md)

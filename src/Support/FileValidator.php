@@ -11,7 +11,7 @@ use JOOservices\Flickr\Exceptions\UploadException;
  */
 final class FileValidator
 {
-    public function validateReadableFile(string $path): void
+    public function validateReadableFile(string $path, ?int $maxBytes = null): void
     {
         if ($path === '' || ! file_exists($path)) {
             throw new UploadException('Upload file does not exist.');
@@ -25,8 +25,17 @@ final class FileValidator
             throw new UploadException('Upload file is not readable.');
         }
 
-        if (filesize($path) === 0) {
+        $size = filesize($path);
+        if ($size === 0 || $size === false) {
             throw new UploadException('Upload file must not be empty.');
+        }
+
+        if ($maxBytes !== null && $size > $maxBytes) {
+            throw new UploadException(sprintf(
+                'Upload file exceeds the account size limit (%d bytes > %d bytes).',
+                $size,
+                $maxBytes,
+            ));
         }
     }
 }

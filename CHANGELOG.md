@@ -5,7 +5,38 @@ All notable changes to `jooservices/flickr` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v2.0.0 - 2026-07-21
+
+### Added
+
+- Require `jooservices/exceptions` (`^0.5`); `FlickrException` extends `AbstractJOORuntimeException`; `ApiException` gains `httpStatus()` / `retryable()` and `FlickrErrorCodeMap`.
+- Opt-in bounded upload ticket poller (`TicketPoller`), `checkTicketsData()`, and cached client-side upload size cap.
+- Public testing kit (`FlickrFake`) built on `jooservices/client` fakes; consumer smoke test (`composer verify:smoke`).
+- Method registry introspection (`Flickr::describe()` → `MethodInfo`) and typo suggestions on failed raw calls.
+- Circuit breaker and proactive rate limiting configured through `jooservices/client`.
+- Migration guide and deprecation policy for v2.
+
+### Changed
+
+- Require `jooservices/client` `^2.0` and `jooservices/dto` `^1.3` (lock files updated).
+- Default `userAgent` is `JOOservices Flickr SDK/2.0`.
+- `UploadTicketData::$complete` is now `?int` (Flickr `0`/`1`/`2`).
+- Transport resilience (retry / circuit breaker / rate limit) owned by `jooservices/client` middleware configuration.
+- `UploadServiceContract::checkTickets()` and `checkTicketsData()` accept optional request options so ticket polling can apply its remaining deadline to each request.
+
+### Deprecated
+
+- Prefer `FlickrFake` over `FakeFlickrTransport` for consumer application tests.
+
+### Security
+
+- Client-side upload size validation against cached Flickr limits.
+- Keep auth, mutation, and private workflows out of cacheable paths.
+
+### DX
+
+- Prefer `FlickrFake` for consumer tests; `FakeFlickrTransport` remains a low-level transport fake.
+- Clearer failure messages with method context and close-name suggestions.
 
 ## v1.1.1 - 2026-07-06
 

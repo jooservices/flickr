@@ -15,3 +15,9 @@ Updated 2026-07-06 for v1.1.0:
 - CI coverage gate, release workflow, registry/API-index verification scripts.
 - Full API index at `docs/02-user-guide/12-full-api-index.md`.
 - Architecture, testing, release, CI/CD, and maintenance docs aligned with current implementation.
+
+Updated 2026-07-21:
+
+- Added `docs/05-maintenance/03-v2-roadmap.md` for v2.0.0 (corrected against Packagist; implementation in progress).
+- Added v1→v2 migration guide and deprecation policy.
+- Documented `FlickrFake`, ticket poller, describe(), circuit breaker / rate-limit config.

@@ -15,6 +15,7 @@ use JOOservices\Flickr\DTO\Upload\UploadResultData;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Support\FileValidator;
 use JOOservices\Flickr\Support\ParameterNormalizer;
+use JOOservices\Flickr\Upload\CachedUploadLimitResolver;
 
 final class FlickrUploadClient implements FlickrUploadClientContract
 {
@@ -27,6 +28,7 @@ final class FlickrUploadClient implements FlickrUploadClientContract
         private FileValidator $fileValidator = new FileValidator,
         private MultipartRequestBuilder $multipart = new MultipartRequestBuilder,
         private ParameterNormalizer $normalizer = new ParameterNormalizer,
+        private ?CachedUploadLimitResolver $uploadLimitResolver = null,
     ) {}
 
     public function upload(UploadPhotoData $data): UploadResultData
@@ -58,10 +60,16 @@ final class FlickrUploadClient implements FlickrUploadClientContract
     private function send(string $endpoint, string $path, array $parameters): UploadResultData
     {
         $this->fileValidator->validateReadableFile($path);
+
         $token = $this->tokens->get();
 
         if ($token === null) {
             throw new AuthenticationException('Flickr upload and replace require an OAuth access token with write permission.');
+        }
+
+        $maxBytes = $this->uploadLimitResolver?->maxUploadBytes();
+        if ($maxBytes !== null) {
+            $this->fileValidator->validateReadableFile($path, $maxBytes);
         }
 
         $parameters = $this->normalizer->normalize($parameters);

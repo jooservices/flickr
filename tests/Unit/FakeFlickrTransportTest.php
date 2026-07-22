@@ -46,7 +46,14 @@ final class FakeFlickrTransportTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'flickr-fake-upload-');
         file_put_contents($path, 'image-bytes');
 
-        $transport = FakeFlickrTransport::new()->pushUploadTicket('123');
+        $transport = FakeFlickrTransport::new()
+            ->pushJson([
+                'stat' => 'ok',
+                'person' => [
+                    'photos' => ['maxupload' => '10485760'],
+                ],
+            ])
+            ->pushUploadTicket('123');
         $flickr = FlickrFactory::make(
             new FlickrConfig('key', 'secret'),
             tokenStore: new InMemoryTokenStore(new AccessTokenData('token', 'token-secret')),

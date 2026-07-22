@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Tests\Unit;
 
-use GuzzleHttp\Psr7\Response;
-use JOOservices\Client\Contracts\HttpClientInterface;
-use JOOservices\Client\Contracts\ResponseWrapperInterface;
 use JOOservices\Flickr\Auth\InMemoryTokenStore;
 use JOOservices\Flickr\Auth\OAuth1Signer;
 use JOOservices\Flickr\Client\FlickrClient;
@@ -30,11 +27,12 @@ use JOOservices\Flickr\Exceptions\TransportException;
 use JOOservices\Flickr\Exceptions\UploadException;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 use JOOservices\Flickr\Tests\Fakes\ArrayCache;
+use JOOservices\Flickr\Tests\Fakes\FakeHttpClient;
+use JOOservices\Flickr\Tests\Fakes\FakeResponseWrapper;
 use JOOservices\Flickr\Tests\Fakes\FakeTransport;
 use JOOservices\Flickr\Tests\Fakes\SpySigner;
 use JOOservices\Flickr\Tests\Fakes\SpyTokenStore;
 use JOOservices\Flickr\Tests\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
 final class ClientAndParserTest extends TestCase
@@ -44,7 +42,11 @@ final class ClientAndParserTest extends TestCase
         $transport = new FakeTransport([new RawResponseData(200, '{"stat":"ok","photos":{"page":1,"pages":2,"perpage":10,"total":"15"}}')]);
         $client = $this->client($transport);
 
-        $response = $client->call('flickr.photos.search', ['text' => 'cats', 'per_page' => 10]);
+        $response = $client->call(
+            'flickr.photos.search',
+            ['text' => 'cats', 'per_page' => 10],
+            new RequestOptionsData(timeoutSeconds: 3),
+        );
         $request = $transport->lastRequest();
 
         $this->assertTrue($response->ok);
@@ -53,6 +55,7 @@ final class ClientAndParserTest extends TestCase
         $this->assertSame('flickr.photos.search', $request['options']['query']['method']);
         $this->assertSame('key', $request['options']['query']['api_key']);
         $this->assertSame(1, $request['options']['query']['nojsoncallback']);
+        $this->assertSame(3, $request['options']['timeout']);
     }
 
     public function test_raw_client_allows_unknown_methods_and_requires_token_for_authenticated_calls(): void
@@ -332,70 +335,14 @@ final class ClientAndParserTest extends TestCase
 
     public function test_joo_client_transport_maps_psr_responses_and_wraps_failures(): void
     {
-        $client = new class implements HttpClientInterface
-        {
-            public bool $fail = false;
-
-            public function get(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->request('GET', $uri, $options);
+        $fail = false;
+        $client = new FakeHttpClient(function () use (&$fail): FakeResponseWrapper {
+            if ($fail) {
+                throw new RuntimeException('Network failed.');
             }
 
-            public function post(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->request('POST', $uri, $options);
-            }
-
-            public function put(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->request('PUT', $uri, $options);
-            }
-
-            public function patch(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->request('PATCH', $uri, $options);
-            }
-
-            public function delete(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->request('DELETE', $uri, $options);
-            }
-
-            public function request(string $method, string $uri, array $options = []): ResponseWrapperInterface
-            {
-                if ($this->fail) {
-                    throw new RuntimeException('Network failed.');
-                }
-
-                return new class implements ResponseWrapperInterface
-                {
-                    public function status(): int
-                    {
-                        return 201;
-                    }
-
-                    public function header(string $name): ?string
-                    {
-                        return $name === 'X-Test' ? 'yes' : null;
-                    }
-
-                    public function json(): array
-                    {
-                        return ['stat' => 'ok'];
-                    }
-
-                    public function toPsrResponse(): ResponseInterface
-                    {
-                        return new Response(201, ['X-Test' => 'yes'], 'body');
-                    }
-
-                    public function toDto(string $dtoClass): object
-                    {
-                        return new $dtoClass;
-                    }
-                };
-            }
-        };
+            return new FakeResponseWrapper(201, 'body', ['X-Test' => ['yes']]);
+        });
         $transport = new JooClientTransport($client);
 
         $response = $transport->request('GET', 'https://example.test', ['query' => ['a' => 'b']]);
@@ -404,47 +351,18 @@ final class ClientAndParserTest extends TestCase
         $this->assertSame('body', $response->body);
         $this->assertSame(['yes'], $response->headers['X-Test']);
 
-        $client->fail = true;
+        $fail = true;
         $this->expectException(TransportException::class);
         $transport->request('GET', 'https://example.test');
     }
 
     public function test_transport_exception_redacts_sensitive_query_parameters(): void
     {
-        $client = new class implements HttpClientInterface
-        {
-            public function get(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                throw new RuntimeException(
-                    'GET https://api.flickr.com/services/rest?api_key=secret-key&oauth_token=token-value&oauth_signature=sig-value failed'
-                );
-            }
-
-            public function post(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->get($uri, $options);
-            }
-
-            public function put(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->get($uri, $options);
-            }
-
-            public function patch(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->get($uri, $options);
-            }
-
-            public function delete(string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->get($uri, $options);
-            }
-
-            public function request(string $method, string $uri, array $options = []): ResponseWrapperInterface
-            {
-                return $this->get($uri, $options);
-            }
-        };
+        $client = new FakeHttpClient(function (): never {
+            throw new RuntimeException(
+                'GET https://api.flickr.com/services/rest?api_key=secret-key&oauth_token=token-value&oauth_signature=sig-value failed'
+            );
+        });
 
         $transport = new JooClientTransport($client);
 
@@ -473,6 +391,8 @@ final class ClientAndParserTest extends TestCase
         } catch (RateLimitException $exception) {
             $this->assertSame('Flickr rate limit exceeded.', $exception->getMessage());
             $this->assertSame(60, $exception->retryAfter());
+            $this->assertSame(429, $exception->httpStatus());
+            $this->assertTrue($exception->retryable());
         }
     }
 
@@ -516,6 +436,25 @@ final class ClientAndParserTest extends TestCase
         } catch (AuthorizationException $exception) {
             $this->assertSame('Insufficient permissions', $exception->getMessage());
             $this->assertSame(99, $exception->apiCode());
+            $this->assertSame(200, $exception->httpStatus());
+            $this->assertFalse($exception->retryable());
+        }
+    }
+
+    public function test_client_throws_retryable_api_exception_for_service_unavailable(): void
+    {
+        $transport = new FakeTransport([
+            new RawResponseData(200, '{"stat":"fail","code":105,"message":"Service currently unavailable"}'),
+        ]);
+        $client = $this->client($transport);
+
+        try {
+            $client->call('flickr.photos.search', [], new RequestOptionsData(throwOnApiError: true));
+            $this->fail('Expected ApiException to be thrown.');
+        } catch (ApiException $exception) {
+            $this->assertSame(105, $exception->apiCode());
+            $this->assertTrue($exception->retryable());
+            $this->assertSame(200, $exception->httpStatus());
         }
     }
 
@@ -532,6 +471,8 @@ final class ClientAndParserTest extends TestCase
         } catch (ApiException $exception) {
             $this->assertSame('Photo not found', $exception->getMessage());
             $this->assertSame(1, $exception->apiCode());
+            $this->assertFalse($exception->retryable());
+            $this->assertSame(200, $exception->httpStatus());
         }
     }
 

@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Exceptions;
 
-use RuntimeException;
+use JOOservices\Exceptions\Base\AbstractJOORuntimeException;
 
-class FlickrException extends RuntimeException {}
+class FlickrException extends AbstractJOORuntimeException {}

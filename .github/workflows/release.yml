@@ -40,16 +40,24 @@ jobs:
       - name: Run security audit
         run: composer audit --locked --abandoned=ignore
 
-      - name: Run lint checks
-        run: composer lint:all
+      - name: Run release gate
+        run: composer ci
 
-      - name: Run verification scripts
+      - name: Check coverage threshold
         run: |
-          composer verify:registry
-          composer verify:api-index
-
-      - name: Run tests
-        run: composer test
+          COVERAGE=$(php -r "
+            \$xml = simplexml_load_file('coverage.xml');
+            \$metrics = \$xml->project->metrics;
+            \$statements = (int)\$metrics['statements'];
+            \$covered = (int)\$metrics['coveredstatements'];
+            \$percent = \$statements > 0 ? round((\$covered / \$statements) * 100, 2) : 0;
+            echo \$percent;
+          ")
+          echo "Code coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
+            echo "::error::Code coverage ${COVERAGE}% is below minimum threshold of 95%"
+            exit 1
+          fi
 
   release:
     name: Create GitHub Release
