@@ -111,7 +111,7 @@ final class ConfigAndDtoTest extends TestCase
             new PlaceData('woe:1', 'San Francisco'),
             new MachineTagData('namespace', 'predicate', 'value'),
             new TagData('tag'),
-            new UploadTicketData('ticket-id', complete: false),
+            new UploadTicketData('ticket-id', complete: 0),
         ];
 
         $this->assertCount(21, $dtos);
@@ -148,6 +148,28 @@ final class ConfigAndDtoTest extends TestCase
                 'publicCacheTtlSeconds' => 0,
             ]);
             $this->fail('Expected ConfigurationException for publicCacheTtlSeconds < 1');
+        } catch (ConfigurationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            FlickrConfig::from([
+                'apiKey' => 'key',
+                'apiSecret' => 'secret',
+                'rateLimitMaxTokens' => 0,
+            ]);
+            $this->fail('Expected ConfigurationException for rateLimitMaxTokens < 1');
+        } catch (ConfigurationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            FlickrConfig::from([
+                'apiKey' => 'key',
+                'apiSecret' => 'secret',
+                'rateLimitRefillPerSecond' => 0,
+            ]);
+            $this->fail('Expected ConfigurationException for rateLimitRefillPerSecond < 1');
         } catch (ConfigurationException) {
             $this->addToAssertionCount(1);
         }

@@ -34,3 +34,37 @@ gh repo edit jooservices/flickr \
 ```
 
 Do not set a homepage unless there is a real docs site or Packagist page.
+
+## Branch protection (ruleset)
+
+The repository uses a GitHub ruleset named **`develop & master`**, aligned with `jooservices/dto`:
+
+| Setting | Value |
+| --- | --- |
+| Protected branches | `develop`, `master` |
+| Default branch | `master` |
+| Direct pushes | blocked (PR required) |
+| Required reviews | none (0 approvals) |
+| Linear history | required |
+| Strict status checks | yes (branch must be up to date) |
+
+View or edit the ruleset at: `https://github.com/jooservices/flickr/rules`
+
+### Differences from `jooservices/dto`
+
+| Item | `jooservices/dto` | `jooservices/flickr` |
+| --- | --- | --- |
+| Default branch | `master` | `master` |
+| Protected branches | `develop`, `master` | `develop`, `master` |
+| `GitGuardian Security Checks` | required | not required (not installed on this repo) |
+| `Lint - AI Instructions` | required | not applicable (no instruction sync script) |
+| `Lint - Registry` | not applicable | required |
+| `Lint - API Index` | not applicable | required |
+
+### Stale `main` branch
+
+A legacy `main` branch exists on the remote but is **not** the default branch and is not protected. It is behind `master`. Prefer deleting it after confirming no open PRs target it:
+
+```bash
+gh api --method DELETE repos/jooservices/flickr/git/refs/heads/main
+```

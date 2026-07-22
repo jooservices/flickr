@@ -48,6 +48,8 @@ use JOOservices\Flickr\Contracts\Services\TestimonialsServiceContract;
 use JOOservices\Flickr\Contracts\Services\TestServiceContract;
 use JOOservices\Flickr\Contracts\Services\UploadServiceContract;
 use JOOservices\Flickr\Contracts\Services\UrlsServiceContract;
+use JOOservices\Flickr\DTO\Metadata\MethodInfo;
+use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 
 final class Flickr
 {
@@ -96,7 +98,13 @@ final class Flickr
         private TestServiceContract $test,
         private TestimonialsServiceContract $testimonials,
         private UrlsServiceContract $urls,
+        private FlickrMethodRegistry $registry = new FlickrMethodRegistry([]),
     ) {}
+
+    public function describe(string $method): ?MethodInfo
+    {
+        return $this->registry->describe($method);
+    }
 
     public function raw(): RawApiServiceContract
     {

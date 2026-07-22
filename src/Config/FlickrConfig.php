@@ -23,8 +23,16 @@ final class FlickrConfig extends Dto
         public string $replaceEndpoint = 'https://up.flickr.com/services/replace',
         public int $timeoutSeconds = 30,
         public int $retryTimes = 0,
-        public string $userAgent = 'JOOservices Flickr SDK/1.0',
+        public string $userAgent = 'JOOservices Flickr SDK/2.0',
         public int $publicCacheTtlSeconds = 300,
+        public bool $enableCircuitBreaker = true,
+        public bool $enableRateLimit = true,
+        /**
+         * Unofficial community default (~3600 requests/hour). Flickr does not publish a hard
+         * public quota; override per app/key as needed.
+         */
+        public int $rateLimitMaxTokens = 3600,
+        public int $rateLimitRefillPerSecond = 1,
     ) {
         if (trim($this->apiKey) === '') {
             throw new ConfigurationException('Flickr API key is required.');
@@ -44,6 +52,14 @@ final class FlickrConfig extends Dto
 
         if ($this->publicCacheTtlSeconds < 1) {
             throw new ConfigurationException('Public cache TTL must be at least 1 second.');
+        }
+
+        if ($this->rateLimitMaxTokens < 1) {
+            throw new ConfigurationException('Rate limit max tokens must be at least 1.');
+        }
+
+        if ($this->rateLimitRefillPerSecond < 1) {
+            throw new ConfigurationException('Rate limit refill per second must be at least 1.');
         }
     }
 }

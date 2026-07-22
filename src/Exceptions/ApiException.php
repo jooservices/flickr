@@ -13,6 +13,8 @@ class ApiException extends FlickrException
         private ?int $apiCode = null,
         int $code = 0,
         ?Throwable $previous = null,
+        private ?int $httpStatus = null,
+        private bool $retryable = false,
     ) {
         parent::__construct($message, $code, $previous);
     }
@@ -20,5 +22,15 @@ class ApiException extends FlickrException
     public function apiCode(): ?int
     {
         return $this->apiCode;
+    }
+
+    public function httpStatus(): ?int
+    {
+        return $this->httpStatus;
+    }
+
+    public function retryable(): bool
+    {
+        return $this->retryable;
     }
 }

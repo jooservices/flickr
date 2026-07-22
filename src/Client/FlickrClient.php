@@ -21,6 +21,7 @@ use JOOservices\Flickr\Enums\ResponseFormat;
 use JOOservices\Flickr\Exceptions\ApiException;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
 use JOOservices\Flickr\Exceptions\AuthorizationException;
+use JOOservices\Flickr\Exceptions\FlickrErrorCodeMap;
 use JOOservices\Flickr\Exceptions\RateLimitException;
 use JOOservices\Flickr\Metadata\FlickrMethodDefinition;
 use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
@@ -59,7 +60,7 @@ final class FlickrClient implements FlickrClientContract
         $raw = $this->transport->request(
             $definition->httpMethod->value,
             $this->config->restEndpoint,
-            $this->transportOptions($definition, $parameters),
+            $this->transportOptions($definition, $parameters, $options),
         );
         $this->checkRateLimit($raw);
 
@@ -70,7 +71,7 @@ final class FlickrClient implements FlickrClientContract
         }
 
         if (! $response->ok && $options->throwOnApiError) {
-            $this->handleApiError($response);
+            $this->handleApiError($response, $method);
         }
 
         return $response;
@@ -121,13 +122,22 @@ final class FlickrClient implements FlickrClientContract
 
     /**
      * @param  array<string, mixed>  $parameters
-     * @return array<string, array<string, mixed>>
+     * @return array<string, mixed>
      */
-    private function transportOptions(FlickrMethodDefinition $definition, array $parameters): array
-    {
-        return $definition->httpMethod === HttpMethod::Post
+    private function transportOptions(
+        FlickrMethodDefinition $definition,
+        array $parameters,
+        RequestOptionsData $options,
+    ): array {
+        $transportOptions = $definition->httpMethod === HttpMethod::Post
             ? ['form_params' => $parameters]
             : ['query' => $parameters];
+
+        if ($options->timeoutSeconds !== null) {
+            $transportOptions['timeout'] = $options->timeoutSeconds;
+        }
+
+        return $transportOptions;
     }
 
     /**
@@ -170,17 +180,24 @@ final class FlickrClient implements FlickrClientContract
         throw new RateLimitException('Flickr rate limit exceeded.', $retryAfter);
     }
 
-    private function handleApiError(ApiResponseData $response): void
+    private function handleApiError(ApiResponseData $response, string $method): void
     {
         $error = $response->error;
         $errCode = $error !== null ? $error->code : null;
         $errMsg = $error !== null ? $error->message : 'Flickr API request failed.';
+        $httpStatus = $response->raw?->statusCode;
+        $retryable = $errCode !== null && FlickrErrorCodeMap::isRetryable($errCode);
 
-        if ($errCode !== null && in_array($errCode, [96, 97, 98, 99], true)) {
-            throw new AuthorizationException($errMsg, $errCode);
+        $suggestion = $this->registry->suggestionFor($method);
+        if ($suggestion !== null) {
+            $errMsg .= " Did you mean [{$suggestion}]?";
         }
 
-        throw new ApiException($errMsg, $errCode);
+        if ($errCode !== null && FlickrErrorCodeMap::isAuthCode($errCode)) {
+            throw new AuthorizationException($errMsg, $errCode, 0, null, $httpStatus, $retryable);
+        }
+
+        throw new ApiException($errMsg, $errCode, 0, null, $httpStatus, $retryable);
     }
 
     /**
