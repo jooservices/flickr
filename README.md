@@ -1,7 +1,11 @@
 # jooservices/flickr
 
+[![CI](https://github.com/jooservices/flickr/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/jooservices/flickr/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jooservices/flickr/graph/badge.svg)](https://codecov.io/gh/jooservices/flickr)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/flickr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/flickr)
+[![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
 [![Release](https://img.shields.io/badge/version-4.0.0-blue.svg)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 PHP 8.5+, framework-agnostic Flickr SDK built on [`jooservices/client:^4.0`](https://github.com/jooservices/client) and
 [`jooservices/dto:^3.0`](https://github.com/jooservices/dto). Complete 224-method REST registry, OAuth 1.0a,

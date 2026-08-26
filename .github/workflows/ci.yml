@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
@@ -40,10 +40,10 @@ jobs:
 
       - name: Install dependencies
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Composer validate
-        run: docker compose run --rm php composer validate-inner
+        run: tools/ci/docker-compose run --rm php composer validate-inner
 
   verify:
     name: Verify (${{ matrix.name }})
@@ -67,7 +67,7 @@ jobs:
           persist-credentials: false
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
@@ -80,10 +80,10 @@ jobs:
 
       - name: Install dependencies
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Run offline verification
-        run: docker compose run --rm php ${{ matrix.command }}
+        run: tools/ci/docker-compose run --rm php ${{ matrix.command }}
 
   lint:
     name: Lint (${{ matrix.name }})
@@ -111,7 +111,7 @@ jobs:
           persist-credentials: false
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
@@ -124,10 +124,10 @@ jobs:
 
       - name: Install dependencies
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Run linter
-        run: docker compose run --rm php ${{ matrix.command }}
+        run: tools/ci/docker-compose run --rm php ${{ matrix.command }}
 
   security:
     name: Security (${{ matrix.name }})
@@ -150,7 +150,7 @@ jobs:
 
       - name: Build PHP image
         if: matrix.name == 'Dependencies'
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         if: matrix.name == 'Dependencies'
@@ -164,11 +164,11 @@ jobs:
 
       - name: Install dependencies
         if: matrix.name == 'Dependencies' && steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Composer audit
         if: matrix.name == 'Dependencies'
-        run: docker compose run --rm php composer audit
+        run: tools/ci/docker-compose run --rm php composer audit
 
       - name: OSV Scanner
         if: matrix.name == 'Dependencies'
@@ -221,7 +221,7 @@ jobs:
           persist-credentials: false
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
@@ -234,12 +234,12 @@ jobs:
 
       - name: Install dependencies
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Run test suite with coverage
         run: |
           mkdir -p build/coverage
-          docker compose run --rm php ./vendor/bin/phpunit \
+          tools/ci/docker-compose run --rm php ./vendor/bin/phpunit \
             --testsuite=${{ matrix.suite }} \
             --coverage-clover=build/coverage/clover-${{ matrix.suite }}.xml
 
@@ -270,7 +270,7 @@ jobs:
           merge-multiple: true
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Cache Composer vendor
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
@@ -283,14 +283,14 @@ jobs:
 
       - name: Install dependencies
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Enforce coverage floor on the Unit suite
         run: |
           # Only the Unit suite is enforced against the 85% floor: it's the suite responsible for
           # exercising the codebase broadly. Arch and Integration are deliberately narrow and are
           # reported below for Codecov/Sonar visibility, not gated here.
-          docker compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml 85.00
+          tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml 85.00
           ls -la build/coverage/matrix
 
       - name: Upload to Codecov
