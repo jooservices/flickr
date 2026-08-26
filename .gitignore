@@ -1,0 +1,9 @@
+/vendor/
+/coverage/
+/coverage.xml
+.phpunit.cache/
+.php-cs-fixer.cache/
+.php-cs-fixer.cache
+composer.phar
+.DS_Store
+.env

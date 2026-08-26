@@ -1,0 +1,42 @@
+name: Link check
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    name: Check Markdown links
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Lychee link checker
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        with:
+          args: >
+            --verbose
+            --no-progress
+            --exclude-mail
+            --exclude-path './vendor/**'
+            --exclude '^https://packagist.org/'
+            --exclude '^https://codecov.io/'
+            './**/*.md'
+
+      - name: Verify docs/api-index.md stays in sync with src
+        run: |
+          docker compose build php
+          docker compose run --rm php composer install --no-interaction --prefer-dist
+          docker compose run --rm php composer verify:api-surface

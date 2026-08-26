@@ -1,0 +1,174 @@
+# Dedicated CI for jooservices/flickr — self-hosted runner1 (Linux X64)
+# Post-merge sanity run on master/develop heads. Full gate lives in ci.yml (pull requests).
+name: CI post-merge
+
+on:
+  push:
+    branches: [master, develop]
+
+concurrency:
+  group: ci-post-merge-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build PHP image
+        run: docker compose build php
+
+      - name: Cache Composer vendor
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: vendor-cache
+        with:
+          path: vendor
+          key: composer-vendor-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-vendor-
+
+      - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+
+      - name: Composer validate
+        run: docker compose run --rm php composer validate-inner
+
+  test:
+    name: Test (${{ matrix.name }})
+    needs: [validate]
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: Arch
+            suite: Arch
+          - name: Unit
+            suite: Unit
+          - name: Integration
+            suite: Integration
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build PHP image
+        run: docker compose build php
+
+      - name: Cache Composer vendor
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: vendor-cache
+        with:
+          path: vendor
+          key: composer-vendor-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-vendor-
+
+      - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+
+      - name: Run test suite with coverage
+        run: |
+          mkdir -p build/coverage
+          docker compose run --rm php ./vendor/bin/phpunit \
+            --testsuite=${{ matrix.suite }} \
+            --coverage-clover=build/coverage/clover-${{ matrix.suite }}.xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-post-merge-${{ matrix.suite }}
+          path: build/coverage/clover-${{ matrix.suite }}.xml
+          if-no-files-found: error
+
+  coverage:
+    name: Coverage upload
+    needs: [test]
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: coverage-post-merge-*
+          path: build/coverage/matrix
+          merge-multiple: true
+
+      - name: Build PHP image
+        run: docker compose build php
+
+      - name: Cache Composer vendor
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: vendor-cache
+        with:
+          path: vendor
+          key: composer-vendor-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-vendor-
+
+      - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+
+      - name: Enforce coverage floor on the Unit suite
+        run: |
+          # Only the Unit suite is enforced against the 85% floor: it's the suite responsible for
+          # exercising the codebase broadly. Arch and Integration are deliberately narrow and are
+          # reported below for Codecov/Sonar visibility, not gated here.
+          docker compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml 85.00
+          ls -la build/coverage/matrix
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@a99c28d3f0da835de33ff2feb2e15691c7b9641f # v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/coverage/matrix/clover-Arch.xml,build/coverage/matrix/clover-Unit.xml,build/coverage/matrix/clover-Integration.xml
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Resolve SonarQube host URL
+        id: sonar-config
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+          host_url="${SONAR_HOST_URL:-https://sonarcloud.io}"
+          host_url="${host_url%/}"
+          case "${host_url}" in
+            http://*|https://*) ;;
+            *) host_url="https://${host_url}" ;;
+          esac
+          if [[ ! "${host_url}" =~ ^https?://[^[:space:]/]+ ]]; then
+            echo "SONAR_HOST_URL must be a valid HTTP(S) URL"
+            exit 1
+          fi
+          echo "host_url=${host_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload SonarQube analysis
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ steps.sonar-config.outputs.host_url }}
+        with:
+          args: >
+            -Dsonar.php.coverage.reportPaths=build/coverage/matrix/clover-Arch.xml,build/coverage/matrix/clover-Unit.xml,build/coverage/matrix/clover-Integration.xml

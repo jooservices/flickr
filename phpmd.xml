@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ruleset name="JOOservices Flickr" xmlns="http://pmd.sf.net/ruleset/1.0.0">
+    <description>
+        Full PHPMD. BooleanArgumentFlag omitted for DTO/config data.
+        Generated service wrappers are thin one-line dispatchers by design.
+    </description>
+    <rule ref="rulesets/cleancode.xml">
+        <exclude name="BooleanArgumentFlag"/>
+        <!-- StaticAccess fights PHP 8.5 idioms: enum case constructors, pure
+             helper namespaces and the deliberate FlickrFake facade. -->
+        <exclude name="StaticAccess"/>
+    </rule>
+    <rule ref="rulesets/codesize.xml">
+        <!-- 38 generated services intentionally share one tiny base class; the
+             generated facade exposes one explicit accessor per service. -->
+        <exclude name="NumberOfChildren"/>
+        <exclude name="TooManyMethods"/>
+        <exclude name="TooManyPublicMethods"/>
+        <exclude name="CouplingBetweenObjects"/>
+        <exclude name="ExcessiveClassComplexity"/>
+        <exclude name="TooManyFields"/>
+        <exclude name="ExcessivePublicCount"/>
+    </rule>
+    <rule ref="rulesets/controversial.xml"/>
+    <rule ref="rulesets/design.xml">
+        <exclude name="CouplingBetweenObjects"/>
+        <!-- 38 generated services intentionally share one tiny base class. -->
+        <exclude name="NumberOfChildren"/>
+    </rule>
+    <rule ref="rulesets/naming.xml"/>
+    <!-- $id / $ok are exact Flickr/domain identifiers on DTOs and tickets. -->
+    <exclude-pattern>src/Dtos/</exclude-pattern>
+    <rule ref="rulesets/unusedcode.xml"/>
+
+    <!-- FlickrFake is deliberately a thin static facade over client v4 fakes
+         (ClientBuilder::fake/recorded/clearFake); its helper lookups are pure
+         static functions by design. -->
+    <exclude-pattern>src/Testing/FlickrFake.php</exclude-pattern>
+</ruleset>
