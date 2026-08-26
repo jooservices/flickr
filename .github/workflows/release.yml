@@ -36,31 +36,31 @@ jobs:
           fi
 
       - name: Build PHP image
-        run: docker compose build php
+        run: tools/ci/docker-compose build php
 
       - name: Install dependencies
-        run: docker compose run --rm php composer install --no-interaction --prefer-dist
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
       - name: Validate
-        run: docker compose run --rm php composer validate-inner
+        run: tools/ci/docker-compose run --rm php composer validate-inner
 
       - name: Verify method registry
-        run: docker compose run --rm php composer verify:registry
+        run: tools/ci/docker-compose run --rm php composer verify:registry
 
       - name: Verify API surface index
-        run: docker compose run --rm php composer verify:api-surface
+        run: tools/ci/docker-compose run --rm php composer verify:api-surface
 
       - name: Consumer smoke test
-        run: docker compose run --rm php composer verify:smoke
+        run: tools/ci/docker-compose run --rm php composer verify:smoke
 
       - name: Lint
-        run: docker compose run --rm php composer lint
+        run: tools/ci/docker-compose run --rm php composer lint
 
       - name: Test with coverage
-        run: docker compose run --rm php composer test:coverage
+        run: tools/ci/docker-compose run --rm php composer test:coverage
 
       - name: Enforce coverage floor
-        run: docker compose run --rm php composer coverage:check
+        run: tools/ci/docker-compose run --rm php composer coverage:check
 
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
