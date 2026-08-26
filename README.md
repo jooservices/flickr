@@ -27,7 +27,7 @@ client v4 transport instead.
 
 ```php
 use JOOservices\Client\ClientBuilder;
-use JOOservices\Flickr\FlickrConfig;
+use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Dtos\Photos\SearchPhotosData;
 
@@ -36,6 +36,7 @@ $http = ClientBuilder::create()
     ->build();
 
 $flickr = FlickrFactory::make(
+    // Load API credentials from server-side secret storage.
     config: new FlickrConfig(apiKey: $key, apiSecret: $secret),
     http: $http,
 );
@@ -78,6 +79,9 @@ not accepted (SSRF/signature-drift protection).
 ## Authentication (OAuth 1.0a)
 
 ```php
+use JOOservices\Flickr\Auth\OAuthCallback;
+use JOOservices\Flickr\Enums\AuthPermission;
+
 $pending = $flickr->oauth()->begin(AuthPermission::Write);   // immutable PendingAuthorization
 // Persist $pending SERVER-SIDE bound to your logged-in user (10-minute lifetime),
 // redirect the user to $pending->authorizationUrl, then on callback:
@@ -96,6 +100,8 @@ before shipping OAuth-authenticated calls; do not serialize `AccessTokenData` to
 ## Upload, replace, tickets
 
 ```php
+use JOOservices\Flickr\Upload\UploadOptions;
+
 $result = $flickr->uploads()->upload('/path/photo.jpg', new UploadOptions(
     title: 'Sunset',
     tags: ['nature', 'big wave'],   // multi-word tags are quoted automatically
@@ -103,6 +109,7 @@ $result = $flickr->uploads()->upload('/path/photo.jpg', new UploadOptions(
 ));
 
 $status = $flickr->uploads()->uploadStatus();          // advisory quota, never blocks uploads
+$factoryPoller = FlickrFactory::pollerFor($flickr);
 $results = $factoryPoller->poll(['ticket-id'], 1000, 60_000); // bounded poller; not for web requests
 ```
 
@@ -120,10 +127,19 @@ fabricated from a broken backend.
 ## Testing without network
 
 ```php
+use JOOservices\Client\ClientBuilder;
+use JOOservices\Flickr\Config\FlickrConfig;
+use JOOservices\Flickr\FlickrFactory;
+use JOOservices\Flickr\Testing\FlickrFake;
+
 $fake = FlickrFake::create();                       // builds on client v4 fakes
 $client = ClientBuilder::create()->build();
-$flickr = FlickrFactory::make($config, $client);
-$fake->queueJson(['stat' => 'ok', ...]);
+// Load API credentials from server-side secret storage.
+$flickr = FlickrFactory::make(
+    config: new FlickrConfig(apiKey: $key, apiSecret: $secret),
+    http: $client,
+);
+$fake->queueJson(['stat' => 'ok']);
 // ... exercise the SDK ...
 $fake->assertCall(0, 'flickr.photos.search', ['text' => 'sunset']);
 $fake->close();                                     // call in tearDown()
