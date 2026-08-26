@@ -1,5 +1,5 @@
 # Dedicated CI for jooservices/flickr — self-hosted runner1 (Linux X64)
-# Pull-request quality gate: full pipeline. Post-merge heads run ci-post-merge.yml.
+# Pull-request quality gate: full pipeline, including bot-safe coverage checks. Post-merge heads run ci-post-merge.yml.
 name: CI
 
 on:
