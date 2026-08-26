@@ -130,12 +130,17 @@ jobs:
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
-      - name: Enforce coverage floor on the Unit suite
+      - name: Generate combined Unit and Integration coverage
         run: |
-          # Only the Unit suite is enforced against the 85% floor: it's the suite responsible for
-          # exercising the codebase broadly. Arch and Integration are deliberately narrow and are
-          # reported below for Codecov/Sonar visibility, not gated here.
-          tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml 85.00
+          tools/ci/docker-compose run --rm php ./vendor/bin/phpunit \
+            --testsuite=Unit,Integration \
+            --coverage-clover=build/coverage/matrix/clover-Unit-Integration.xml
+
+      - name: Enforce combined coverage floor
+        run: |
+          # Unit and Integration together cover the production surface, including the generated
+          # service wrappers exercised by the offline full-stack fake tests.
+          tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit-Integration.xml 85.00
           ls -la build/coverage/matrix
 
       - name: Upload to Codecov
