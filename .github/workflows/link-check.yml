@@ -37,6 +37,6 @@ jobs:
 
       - name: Verify docs/api-index.md stays in sync with src
         run: |
-          docker compose build php
-          docker compose run --rm php composer install --no-interaction --prefer-dist
-          docker compose run --rm php composer verify:api-surface
+          tools/ci/docker-compose build php
+          tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
+          tools/ci/docker-compose run --rm php composer verify:api-surface
