@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/jooservices/flickr/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/jooservices/flickr/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/jooservices/flickr/graph/badge.svg)](https://codecov.io/gh/jooservices/flickr)
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=jooservices_flickr&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_flickr)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/flickr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/flickr)
 [![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
 [![Release](https://img.shields.io/badge/version-4.0.0-blue.svg)](CHANGELOG.md)
