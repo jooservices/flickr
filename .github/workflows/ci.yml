@@ -1,5 +1,5 @@
 # Dedicated CI for jooservices/flickr — self-hosted runner1 (Linux X64)
-# Pull-request quality gate: full pipeline. Post-merge heads run ci-post-merge.yml.
+# Pull-request quality gate: full pipeline, including bot-safe coverage checks. Post-merge heads run ci-post-merge.yml.
 name: CI
 
 on:
@@ -299,6 +299,7 @@ jobs:
           ls -la build/coverage/matrix
 
       - name: Upload to Codecov
+        if: github.event.pull_request.user.type != 'Bot'
         uses: codecov/codecov-action@a99c28d3f0da835de33ff2feb2e15691c7b9641f # v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -325,6 +326,7 @@ jobs:
           echo "host_url=${host_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload SonarQube analysis
+        if: github.event.pull_request.user.type != 'Bot'
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
