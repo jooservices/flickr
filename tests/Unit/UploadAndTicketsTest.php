@@ -101,7 +101,7 @@ final class UploadAndTicketsTest extends TestCase
         $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Delete));
         $path = $this->tempFile();
 
-        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photo id="987"/></rsp>'));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photoid>987</photoid></rsp>'));
 
         $result = $this->service()->upload($path, new UploadOptions(title: 'T', tags: ['one', 'big dog'], isPublic: true));
 
@@ -125,17 +125,52 @@ final class UploadAndTicketsTest extends TestCase
     public function testAsyncUploadReturnsTicketIds(): void
     {
         $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
-        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><ticketid id="t1"/><ticketid id="t2"/></rsp>'));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><ticketid>t1</ticketid><ticketid>t2</ticketid></rsp>'));
 
         $result = $this->service()->upload($this->tempFile(), new UploadOptions(async: true));
 
         self::assertSame(['t1', 't2'], $result->ticketIds);
     }
 
+    public function testSyncUploadParsesPhotoidAttributesWithTextId(): void
+    {
+        $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
+        $this->transport->queue(new RawResponseData(
+            200,
+            [],
+            '<rsp stat="ok"><photoid secret="abc" originalsecret="xyz">1234</photoid></rsp>',
+        ));
+
+        $result = $this->service()->upload($this->tempFile(), new UploadOptions());
+
+        self::assertSame('1234', $result->photoId);
+        self::assertSame([], $result->ticketIds);
+    }
+
+    public function testSyncUploadParsesLegacyPhotoIdAttribute(): void
+    {
+        $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photo id="987"/></rsp>'));
+
+        $result = $this->service()->upload($this->tempFile(), new UploadOptions());
+
+        self::assertSame('987', $result->photoId);
+    }
+
+    public function testAsyncUploadParsesLegacyTicketIdAttribute(): void
+    {
+        $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><ticketid id="t1"/></rsp>'));
+
+        $result = $this->service()->upload($this->tempFile(), new UploadOptions(async: true));
+
+        self::assertSame(['t1'], $result->ticketIds);
+    }
+
     public function testReplaceCarriesPhotoIdAndFlagsResult(): void
     {
         $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
-        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photo id="42"/></rsp>'));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photoid>42</photoid></rsp>'));
 
         $result = $this->service()->replace($this->tempFile(), '42');
 
@@ -191,7 +226,7 @@ final class UploadAndTicketsTest extends TestCase
         yield 'doctype' => ['<!DOCTYPE rsp SYSTEM "x"><rsp stat="ok"></rsp>'];
         yield 'malformed' => ['<rsp stat='];
         yield 'wrong root' => ['<foo stat="ok"/>'];
-        yield 'missing stat' => ['<rsp><photo id="1"/></rsp>'];
+        yield 'missing stat' => ['<rsp><photoid>1</photoid></rsp>'];
         yield 'no ids' => ['<rsp stat="ok"></rsp>'];
     }
 
@@ -235,7 +270,7 @@ final class UploadAndTicketsTest extends TestCase
     {
         $this->tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
         $path = $this->tempFile();
-        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photo id="1"/></rsp>'));
+        $this->transport->queue(new RawResponseData(200, [], '<rsp stat="ok"><photoid>1</photoid></rsp>'));
 
         $this->service()->upload($path, new UploadOptions(tags: ['foo " bar']));
 
@@ -270,7 +305,7 @@ final class UploadAndTicketsTest extends TestCase
     public function testUploadRejectsNonSuccessfulHttpResponse(): void
     {
         $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Write));
-        $this->transport->queue(new RawResponseData(500, [], '<rsp stat="ok"><photo id="987"/></rsp>'));
+        $this->transport->queue(new RawResponseData(500, [], '<rsp stat="ok"><photoid>987</photoid></rsp>'));
 
         $this->expectException(\JOOservices\Flickr\Exceptions\InvalidResponseException::class);
         $this->service()->upload($this->tempFile(), new UploadOptions());
@@ -320,8 +355,8 @@ final class UploadAndTicketsTest extends TestCase
         $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
         $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
 
-        $pendingBody = '{"stat":"ok","tickets":{"ticket":[{"id":"a","complete":"0"},{"id":"b","complete":"0"}]}}';
-        $finalBody = '{"stat":"ok","tickets":{"ticket":[{"id":"a","complete":"1","photo_id":"p-a"},{"id":"b","complete":"2"}]}}';
+        $pendingBody = '{"stat":"ok","uploader":{"ticket":[{"id":"a","complete":0},{"id":"b","complete":0}]}}';
+        $finalBody = '{"stat":"ok","uploader":{"ticket":[{"id":"a","complete":1,"photoid":"p-a"},{"id":"b","complete":2}]}}';
 
         $this->transport->queue(
             new RawResponseData(200, [], $pendingBody),
@@ -343,7 +378,7 @@ final class UploadAndTicketsTest extends TestCase
         $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
         $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
 
-        $pending = '{"stat":"ok","tickets":{"ticket":[{"id":"z","complete":"0"}]}}';
+        $pending = '{"stat":"ok","uploader":{"ticket":[{"id":"z","complete":0}]}}';
         $this->transport->queue(
             new RawResponseData(200, [], $pending),
             new RawResponseData(200, [], $pending),
@@ -359,7 +394,7 @@ final class UploadAndTicketsTest extends TestCase
         $clock = new \JOOservices\Flickr\Tests\Support\MutableClock();
         $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
         $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
-        $this->transport->queue(new RawResponseData(200, [], '{"stat":"ok","tickets":{"ticket":[{"id":"z","complete":"0"}]}}'));
+        $this->transport->queue(new RawResponseData(200, [], '{"stat":"ok","uploader":{"ticket":[{"id":"z","complete":0}]}}'));
 
         $results = (new TicketPoller($this->service(), $clock, $sleeper))->poll(['z'], 60_000, 1_000);
 
@@ -374,11 +409,45 @@ final class UploadAndTicketsTest extends TestCase
         $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
         $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
 
-        $this->transport->queue(new RawResponseData(200, [], '{"stat":"ok","tickets":{}}'));
+        $this->transport->queue(new RawResponseData(200, [], '{"stat":"ok","uploader":{}}'));
 
         $results = (new TicketPoller($this->service(), $clock, $sleeper))->poll(['ghost'], 10, 5_000);
 
         self::assertSame(TicketStatus::Invalid, $results[0]->status);
+    }
+
+    public function testPollerReadsASingleOfficialTicketObject(): void
+    {
+        $clock = new \JOOservices\Flickr\Tests\Support\MutableClock();
+        $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
+        $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
+        $this->transport->queue(new RawResponseData(
+            200,
+            [],
+            '{"stat":"ok","uploader":{"ticket":{"id":"a","complete":1,"photoid":99}}}',
+        ));
+
+        $results = (new TicketPoller($this->service(), $clock, $sleeper))->poll(['a'], 10, 5_000);
+
+        self::assertSame(TicketStatus::Completed, $results[0]->status);
+        self::assertSame('99', $results[0]->photoId);
+    }
+
+    public function testPollerFallsBackToLegacyTicketsEnvelope(): void
+    {
+        $clock = new \JOOservices\Flickr\Tests\Support\MutableClock();
+        $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
+        $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Read));
+        $this->transport->queue(new RawResponseData(
+            200,
+            [],
+            '{"stat":"ok","tickets":{"ticket":[{"id":"a","complete":"1","photo_id":"p-a"}]}}',
+        ));
+
+        $results = (new TicketPoller($this->service(), $clock, $sleeper))->poll(['a'], 10, 5_000);
+
+        self::assertSame(TicketStatus::Completed, $results[0]->status);
+        self::assertSame('p-a', $results[0]->photoId);
     }
 
     /**

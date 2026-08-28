@@ -39,8 +39,12 @@ final class ApiResponseData
             $current = $current[$segment];
         }
 
-        if (!is_array($current) || array_is_list($current) === false) {
+        if (is_array($current) === false) {
             return [];
+        }
+
+        if (array_is_list($current) === false) {
+            $current = [$current];
         }
 
         /** @var list<array<string, mixed>> */

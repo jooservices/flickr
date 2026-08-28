@@ -334,7 +334,7 @@ final class FullStackFakeTest extends TestCase
 
         file_put_contents($path, 'bytes');
 
-        $this->fake->queueXml('<rsp stat="ok"><photo id="9"/></rsp>');
+        $this->fake->queueXml('<rsp stat="ok"><photoid>9</photoid></rsp>');
 
         $result = $this->flickr->uploads()->upload($path, new UploadOptions(title: 'x'));
         unlink($path);

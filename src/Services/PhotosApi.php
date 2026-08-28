@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JOOservices\Flickr\Services;
 
 use JOOservices\Flickr\Api\ApiCallOptions;
+use JOOservices\Flickr\Client\FlickrErrorCodeMap;
+use JOOservices\Flickr\Dtos\Common\ApiErrorData;
 use JOOservices\Flickr\Dtos\Common\ApiResponseData;
 use JOOservices\Flickr\Dtos\Photos\PhotoExifData;
 use JOOservices\Flickr\Dtos\Photos\PhotoInfoData;
@@ -22,19 +24,21 @@ use JOOservices\Flickr\Hydrators\SizeHydrator;
  */
 final class PhotosApi extends AbstractApiService
 {
-    public function search(SearchPhotosData $query): SearchResultData
+    public function search(SearchPhotosData $query, ?ApiCallOptions $options = null): SearchResultData
     {
-        return SearchHydrator::fromResponse($this->call('flickr.photos.search', $query->toArray()));
+        return SearchHydrator::fromResponse($this->typedCall('flickr.photos.search', $query->toArray(), $options));
     }
 
-    public function getRecent(?SearchPhotosData $query = null): SearchResultData
+    public function getRecent(?SearchPhotosData $query = null, ?ApiCallOptions $options = null): SearchResultData
     {
-        return SearchHydrator::fromResponse($this->call('flickr.photos.getRecent', ($query ?? new SearchPhotosData())->toArray()));
+        return SearchHydrator::fromResponse(
+            $this->typedCall('flickr.photos.getRecent', ($query ?? new SearchPhotosData())->toArray(), $options),
+        );
     }
 
     public function getInfo(string $photoId): PhotoInfoData
     {
-        return InfoHydrator::fromResponse($this->call('flickr.photos.getInfo', ['photo_id' => $photoId]));
+        return InfoHydrator::fromResponse($this->typedCall('flickr.photos.getInfo', ['photo_id' => $photoId]));
     }
 
     /**
@@ -43,14 +47,42 @@ final class PhotosApi extends AbstractApiService
     public function getSizes(string $photoId): array
     {
         return SizeHydrator::many(
-            $this->call('flickr.photos.getSizes', ['photo_id' => $photoId])->listAt('sizes', 'size'),
+            $this->typedCall('flickr.photos.getSizes', ['photo_id' => $photoId])->listAt('sizes', 'size'),
         );
     }
 
     public function getExif(string $photoId): PhotoExifData
     {
-        return InfoHydrator::exifFromResponse($this->call('flickr.photos.getExif', ['photo_id' => $photoId]));
+        return InfoHydrator::exifFromResponse($this->typedCall('flickr.photos.getExif', ['photo_id' => $photoId]));
     }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function typedCall(string $method, array $parameters, ?ApiCallOptions $options = null): ApiResponseData
+    {
+        $response = $this->call($method, $parameters, self::typedOptions($options));
+
+        if ($response->ok === false) {
+            throw FlickrErrorCodeMap::throwFor(
+                $response->error ?? new ApiErrorData('unknown', 'Flickr API request failed.'),
+            );
+        }
+
+        return $response;
+    }
+
+    private static function typedOptions(?ApiCallOptions $options): ApiCallOptions
+    {
+        $options ??= new ApiCallOptions();
+
+        return new ApiCallOptions(
+            mode: $options->mode,
+            bypassCache: $options->bypassCache,
+            throwOnApiError: true,
+        );
+    }
+
     /**
      * @param array<string, mixed> $parameters
      */

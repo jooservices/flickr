@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Hydrators;
 
+use JOOservices\Flickr\Client\FlickrErrorCodeMap;
+use JOOservices\Flickr\Dtos\Common\ApiErrorData;
 use JOOservices\Flickr\Dtos\Common\ApiResponseData;
 use JOOservices\Flickr\Dtos\Photos\ExifEntryData;
 use JOOservices\Flickr\Dtos\Photos\PhotoExifData;
@@ -13,6 +15,8 @@ final class InfoHydrator
 {
     public static function fromResponse(ApiResponseData $response): PhotoInfoData
     {
+        self::assertOk($response);
+
         $photo = $response->mapAt('photo');
 
         return new PhotoInfoData(
@@ -21,14 +25,16 @@ final class InfoHydrator
             description: self::content($photo['description'] ?? null),
             ownerId: self::ownerField($photo, 'nsid'),
             ownerUsername: self::ownerField($photo, 'username'),
-            datePosted: self::firstString($photo, 'dateposted', 'date_posted'),
-            dateTaken: self::str($photo['datetaken'] ?? null),
+            datePosted: self::dateValue($photo, 'posted', 'dateposted', 'date_posted'),
+            dateTaken: self::dateValue($photo, 'taken', 'datetaken'),
             views: self::intish($photo['views'] ?? null),
         );
     }
 
     public static function exifFromResponse(ApiResponseData $response): PhotoExifData
     {
+        self::assertOk($response);
+
         $photo = $response->mapAt('photo');
         $entries = [];
 
@@ -86,10 +92,20 @@ final class InfoHydrator
     /**
      * @param array<string, mixed> $photo
      */
-    private static function firstString(array $photo, string ...$keys): ?string
+    private static function dateValue(array $photo, string $datesKey, string ...$fallbacks): ?string
     {
-        foreach ($keys as $key) {
-            $value = self::str($photo[$key] ?? null);
+        $dates = $photo['dates'] ?? null;
+
+        if (is_array($dates)) {
+            $nested = self::stringish($dates[$datesKey] ?? null);
+
+            if ($nested !== null) {
+                return $nested;
+            }
+        }
+
+        foreach ($fallbacks as $key) {
+            $value = self::stringish($photo[$key] ?? null);
 
             if ($value !== null) {
                 return $value;
@@ -97,6 +113,24 @@ final class InfoHydrator
         }
 
         return null;
+    }
+
+    private static function stringish(mixed $value): ?string
+    {
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        return is_int($value) ? (string) $value : null;
+    }
+
+    private static function assertOk(ApiResponseData $response): void
+    {
+        if ($response->ok === false) {
+            throw FlickrErrorCodeMap::throwFor(
+                $response->error ?? new ApiErrorData('unknown', 'Flickr API request failed.'),
+            );
+        }
     }
 
     private static function str(mixed $value): ?string

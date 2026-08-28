@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\Flickr\Hydrators;
 
+use JOOservices\Flickr\Client\FlickrErrorCodeMap;
+use JOOservices\Flickr\Dtos\Common\ApiErrorData;
 use JOOservices\Flickr\Dtos\Common\ApiResponseData;
 use JOOservices\Flickr\Dtos\Photos\SearchResultData;
 
@@ -11,6 +13,12 @@ final class SearchHydrator
 {
     public static function fromResponse(ApiResponseData $response): SearchResultData
     {
+        if ($response->ok === false) {
+            throw FlickrErrorCodeMap::throwFor(
+                $response->error ?? new ApiErrorData('unknown', 'Flickr API request failed.'),
+            );
+        }
+
         $container = $response->mapAt('photos');
 
         return new SearchResultData(
