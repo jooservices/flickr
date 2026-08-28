@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "094921fffe913e189c41298de7fd70f3",
+    "content-hash": "0a2f7ad15ad43dbdd5e0e821f4c465c4",
     "packages": [
         {
             "name": "jooservices/client",

@@ -8,7 +8,7 @@ use JOOservices\Flickr\Exceptions\ConfigurationException;
 
 final class FlickrConfig
 {
-    public const DEFAULT_USER_AGENT = 'jooservices-flickr/4.0 (+https://github.com/jooservices/flickr)';
+    public const DEFAULT_USER_AGENT = 'jooservices-flickr/4.1 (+https://github.com/jooservices/flickr)';
 
     public function __construct(
         public readonly string $apiKey,
