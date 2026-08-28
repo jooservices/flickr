@@ -4,6 +4,7 @@
 
 | Version | Supported |
 | --- | --- |
+| 4.1.x | ✅ (current) |
 | 4.0.x | ✅ |
 | < 4.0 | ❌ (no backward compatibility) |
 
