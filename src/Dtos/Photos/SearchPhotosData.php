@@ -17,7 +17,7 @@ final class SearchPhotosData
         public readonly ?string $tags = null,
         public readonly ?string $userId = null,
         public readonly ?string $extras = null,
-        public readonly int $perPage = 100,
+        public readonly int $perPage = 30,
         public readonly int $page = 1,
     ) {
         if ($this->perPage < 1 || $this->perPage > 500) {

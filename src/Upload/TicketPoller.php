@@ -66,12 +66,18 @@ final class TicketPoller
     private function fetchRemoteTickets(array $ticketIds): array
     {
         $response = $this->uploads->checkTickets($ticketIds);
+        $tickets = $response->listAt('uploader', 'ticket');
+
+        if ($tickets === []) {
+            $tickets = $response->listAt('tickets', 'ticket');
+        }
+
         $remote = [];
 
-        foreach ($response->listAt('tickets', 'ticket') as $ticket) {
-            $ticketId = $ticket['id'] ?? null;
+        foreach ($tickets as $ticket) {
+            $ticketId = self::idString($ticket['id'] ?? null);
 
-            if (is_string($ticketId) && $ticketId !== '') {
+            if ($ticketId !== '') {
                 $remote[$ticketId] = $ticket;
             }
         }
@@ -117,15 +123,10 @@ final class TicketPoller
             return new TicketPollResult($ticketId, TicketStatus::Invalid);
         }
 
-        $complete = $ticket['complete'] ?? null;
-
-        if ($complete === '1') {
-            return new TicketPollResult($ticketId, TicketStatus::Completed, $this->photoIdOrNull($ticket));
-        }
-
-        return match ($complete) {
-            '2' => new TicketPollResult($ticketId, TicketStatus::Failed),
-            '0' => new TicketPollResult($ticketId, TicketStatus::Pending),
+        return match ($ticket['complete'] ?? null) {
+            1, '1' => new TicketPollResult($ticketId, TicketStatus::Completed, $this->photoIdOrNull($ticket)),
+            2, '2' => new TicketPollResult($ticketId, TicketStatus::Failed),
+            0, '0' => new TicketPollResult($ticketId, TicketStatus::Pending),
             default => new TicketPollResult($ticketId, TicketStatus::Invalid),
         };
     }
@@ -135,10 +136,18 @@ final class TicketPoller
      */
     private function photoIdOrNull(array $ticket): ?string
     {
-        $photoId = $ticket['photo_id'] ?? null;
-        $value = is_string($photoId) ? $photoId : '';
+        $value = self::idString($ticket['photoid'] ?? $ticket['photo_id'] ?? null);
 
         return $value === '' ? null : $value;
+    }
+
+    private static function idString(mixed $value): string
+    {
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        return is_string($value) ? $value : '';
     }
 
     /**

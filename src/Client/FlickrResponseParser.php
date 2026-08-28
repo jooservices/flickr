@@ -181,22 +181,69 @@ final class FlickrResponseParser
      */
     private static function extractOutcome(SimpleXMLElement $xml): array
     {
-        $photoId = isset($xml->photo) ? self::xmlAttr($xml->photo, 'id') : '';
-        $ticketIds = [];
-
-        foreach ($xml->ticketid ?? [] as $ticket) {
-            $ticketId = self::xmlAttr($ticket, 'id');
-
-            if ($ticketId !== '') {
-                $ticketIds[] = $ticketId;
-            }
-        }
+        $photoId = self::extractPhotoId($xml);
+        $ticketIds = self::extractTicketIds($xml);
 
         if ($photoId === '' && $ticketIds === []) {
             throw new InvalidResponseException('Flickr upload response contains neither a photo id nor ticket ids.');
         }
 
         return ['photoId' => $photoId === '' ? null : $photoId, 'ticketIds' => $ticketIds];
+    }
+
+    private static function extractPhotoId(SimpleXMLElement $xml): string
+    {
+        if (isset($xml->photoid)) {
+            $fromText = trim((string) $xml->photoid);
+
+            if ($fromText !== '') {
+                return $fromText;
+            }
+
+            $fromAttribute = self::xmlAttr($xml->photoid, 'id');
+
+            if ($fromAttribute !== '') {
+                return $fromAttribute;
+            }
+        }
+
+        if (isset($xml->photo) === false) {
+            return '';
+        }
+
+        $fromAttribute = self::xmlAttr($xml->photo, 'id');
+
+        if ($fromAttribute !== '') {
+            return $fromAttribute;
+        }
+
+        return trim((string) $xml->photo);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function extractTicketIds(SimpleXMLElement $xml): array
+    {
+        if (isset($xml->ticketid) === false) {
+            return [];
+        }
+
+        $ticketIds = [];
+
+        foreach ($xml->ticketid as $ticket) {
+            $ticketId = trim((string) $ticket);
+
+            if ($ticketId === '') {
+                $ticketId = self::xmlAttr($ticket, 'id');
+            }
+
+            if ($ticketId !== '') {
+                $ticketIds[] = $ticketId;
+            }
+        }
+
+        return $ticketIds;
     }
 
     private static function xmlAttr(SimpleXMLElement $node, string $name): string

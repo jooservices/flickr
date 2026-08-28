@@ -5,8 +5,15 @@ declare(strict_types=1);
 namespace JOOservices\Flickr\Tests\Unit;
 
 use InvalidArgumentException;
+use JOOservices\Flickr\Api\ApiCallOptions;
+use JOOservices\Flickr\Auth\AccessTokenData;
+use JOOservices\Flickr\Auth\InMemoryTokenStore;
 use JOOservices\Flickr\Dtos\Common\RawResponseData;
 use JOOservices\Flickr\Dtos\Photos\PhotoData;
+use JOOservices\Flickr\Dtos\Photos\SearchPhotosData;
+use JOOservices\Flickr\Enums\AuthenticationMode;
+use JOOservices\Flickr\Enums\AuthPermission;
+use JOOservices\Flickr\Exceptions\ApiException;
 use JOOservices\Flickr\Support\PhotoUrlBuilder;
 use JOOservices\Flickr\Tests\Support\FakeTransport;
 use JOOservices\Flickr\Tests\Support\PipelineFactory;
@@ -43,9 +50,9 @@ final class TypedWorkflowTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         if ($pageOrPer < 1 || $pageOrPer > 500) {
-            new \JOOservices\Flickr\Dtos\Photos\SearchPhotosData(perPage: $pageOrPer);
+            new SearchPhotosData(perPage: $pageOrPer);
         } else {
-            new \JOOservices\Flickr\Dtos\Photos\SearchPhotosData(page: -1);
+            new SearchPhotosData(page: -1);
         }
     }
 
@@ -65,7 +72,7 @@ final class TypedWorkflowTest extends TestCase
             ],
         ])));
 
-        $result = $this->photos()->search(new \JOOservices\Flickr\Dtos\Photos\SearchPhotosData(text: 'sunset', perPage: 100, page: 2));
+        $result = $this->photos()->search(new SearchPhotosData(text: 'sunset', perPage: 100, page: 2));
 
         self::assertCount(1, $result->photos);
         self::assertSame('11', $result->photos[0]->id);
@@ -109,6 +116,10 @@ final class TypedWorkflowTest extends TestCase
                     'title' => ['_content' => 'Title'],
                     'description' => ['_content' => 'Desc'],
                     'owner' => ['nsid' => '123', 'username' => 'vu'],
+                    'dates' => [
+                        'posted' => '1234567890',
+                        'taken' => '2004-11-05 22:32:18',
+                    ],
                     'views' => '42',
                 ],
             ])),
@@ -126,6 +137,8 @@ final class TypedWorkflowTest extends TestCase
         $info = $this->photos()->getInfo('77');
         self::assertSame('Title', $info->title);
         self::assertSame('vu', $info->ownerUsername);
+        self::assertSame('1234567890', $info->datePosted);
+        self::assertSame('2004-11-05 22:32:18', $info->dateTaken);
         self::assertSame(42, $info->views);
 
         $exif = $this->photos()->getExif('77');
@@ -139,17 +152,95 @@ final class TypedWorkflowTest extends TestCase
         $complete = new PhotoData(id: '1', secret: 'sec', server: 'sv', farm: 6);
 
         self::assertSame(
-            'https://farm6.static.flickr.com/sv/1_sec_m.jpg',
+            'https://live.staticflickr.com/sv/1_sec_m.jpg',
             PhotoUrlBuilder::build($complete, 'm'),
         );
         self::assertSame(
-            'https://farm6.static.flickr.com/sv/1_sec_m.jpg',
+            'https://live.staticflickr.com/sv/1_sec_m.jpg',
             PhotoUrlBuilder::build($complete, \JOOservices\Flickr\Enums\PhotoSize::Small),
         );
         self::assertSame(
-            'https://farm6.static.flickr.com/sv/1_sec.jpg',
+            'https://live.staticflickr.com/sv/1_sec.jpg',
             PhotoUrlBuilder::build($complete, \JOOservices\Flickr\Enums\PhotoSize::Medium),
         );
         self::assertNull(PhotoUrlBuilder::build(new PhotoData(id: '1')));
+    }
+
+    public function testGetInfoHydratesLegacyTopLevelDateFields(): void
+    {
+        $this->transport->queue(new RawResponseData(200, [], (string) json_encode([
+            'stat' => 'ok',
+            'photo' => [
+                'id' => '77',
+                'dateposted' => '111',
+                'datetaken' => '2001-01-01 00:00:00',
+            ],
+        ])));
+
+        $info = $this->photos()->getInfo('77');
+
+        self::assertSame('111', $info->datePosted);
+        self::assertSame('2001-01-01 00:00:00', $info->dateTaken);
+    }
+
+    public function testGetInfoThrowsOnStatFail(): void
+    {
+        $this->transport->queue(new RawResponseData(
+            200,
+            [],
+            '{"stat":"fail","code":"1","message":"Photo not found"}',
+        ));
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('Photo not found');
+
+        $this->photos()->getInfo('missing');
+    }
+
+    public function testSearchSignsWhenAuthenticatedModeIsRequested(): void
+    {
+        $tokens = new InMemoryTokenStore();
+        $tokens->put(new AccessTokenData('tok', 'sec', AuthPermission::Write));
+        $this->transport->queue(new RawResponseData(200, [], (string) json_encode([
+            'stat' => 'ok',
+            'photos' => ['page' => 1, 'pages' => 1, 'perpage' => 30, 'total' => '0', 'photo' => []],
+        ])));
+
+        $photos = new PhotosApi(PipelineFactory::apiWithTokens($this->transport, $tokens));
+        $photos->search(
+            new SearchPhotosData(text: 'mine'),
+            new ApiCallOptions(mode: AuthenticationMode::Authenticated),
+        );
+
+        $dispatched = PipelineFactory::dispatchedParameters($this->transport->sentRequests()[0][0]);
+
+        self::assertArrayHasKey('oauth_signature', $dispatched);
+        self::assertArrayHasKey('oauth_token', $dispatched);
+        self::assertSame('tok', $dispatched['oauth_token']);
+        self::assertSame('flickr.photos.search', $dispatched['method']);
+    }
+
+    public function testSearchDefaultPerPageIsThirty(): void
+    {
+        self::assertSame(30, (new SearchPhotosData())->perPage);
+    }
+
+    public function testSearchHydratesASinglePhotoObject(): void
+    {
+        $this->transport->queue(new RawResponseData(200, [], (string) json_encode([
+            'stat' => 'ok',
+            'photos' => [
+                'page' => 1,
+                'pages' => 1,
+                'perpage' => 30,
+                'total' => 1,
+                'photo' => ['id' => '11', 'owner' => 'o', 'title' => 'T'],
+            ],
+        ])));
+
+        $result = $this->photos()->search(new SearchPhotosData(text: 'one'));
+
+        self::assertCount(1, $result->photos);
+        self::assertSame('11', $result->photos[0]->id);
     }
 }
