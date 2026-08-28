@@ -26,3 +26,14 @@ Complete rebuild. **No backward compatibility** with the archived v2 line.
 ### Removed
 - Legacy `flickr.auth.*` / `flickr.auth.oauth.*` live support and Panda support (metadata-only, fail before network).
 - General XML REST parsing, Guzzle option bags, `parse_str()`, magic `__call`, upload-limit enforcement via `people.getLimits`, force-cached ticket polling.
+
+### Fixed
+- Upload/replace XML parsing now reads official Flickr `photoid`/`ticketid` text nodes (with attribute fallbacks) instead of the invented `<photo id>` / `<ticketid id>` shapes.
+- Ticket poller reads official `uploader.ticket` JSON with `photoid` and integer or string `complete` codes (`0`/`1`/`2`); legacy `tickets.ticket` / `photo_id` still accepted.
+- `ApiResponseData::listAt()` wraps a single associative object as a one-element list — Flickr often returns one item as an object, not an array.
+- `photos.getInfo` hydrates `photo.dates.posted` / `photo.dates.taken` (with `dateposted`/`date_posted`/`datetaken` fallbacks).
+- Typed photo workflows force `throwOnApiError` so `stat=fail` raises instead of empty DTOs.
+- `PhotosApi::search()` and `getRecent()` accept `ApiCallOptions` so private-library searches can sign.
+- `PhotoUrlBuilder` uses `https://live.staticflickr.com/{server}/{id}_{secret}{suffix}.jpg`.
+- `SearchPhotosData` default `perPage` is 30 (Flickr app TOS); max remains 500.
+- README OAuth callback example uses `token:` instead of the invalid `oauthToken:` named argument.

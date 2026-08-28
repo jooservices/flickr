@@ -50,7 +50,7 @@ try {
 
     $path = tempnam(sys_get_temp_dir(), 'smoke');
     file_put_contents((string) $path, 'bytes');
-    $fake->queueXml('<rsp stat="ok"><photo id="7"/></rsp>');
+    $fake->queueXml('<rsp stat="ok"><photoid>7</photoid></rsp>');
     $upload = $flickr->uploads()->upload((string) $path, new UploadOptions(title: 'x'));
     unlink((string) $path);
     $check($upload->photoId === '7', 'multipart upload');

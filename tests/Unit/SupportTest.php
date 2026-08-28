@@ -135,4 +135,19 @@ final class SupportTest extends TestCase
         self::assertSame(1, $response->mapAt('photos')['page']);
         self::assertSame([], $response->listAt('missing', 'path'));
     }
+
+    public function testListAtWrapsASingleAssociativeObject(): void
+    {
+        $response = new ApiResponseData(true, [
+            'uploader' => [
+                'ticket' => ['id' => 'a', 'complete' => 1, 'photoid' => 'p-a'],
+            ],
+        ]);
+
+        self::assertSame(
+            [['id' => 'a', 'complete' => 1, 'photoid' => 'p-a']],
+            $response->listAt('uploader', 'ticket'),
+        );
+        self::assertSame([], $response->listAt('uploader', 'missing'));
+    }
 }

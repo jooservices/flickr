@@ -87,7 +87,7 @@ $pending = $flickr->oauth()->begin(AuthPermission::Write);   // immutable Pendin
 // redirect the user to $pending->authorizationUrl, then on callback:
 $token = $flickr->oauth()->complete(
     $pending,
-    new OAuthCallback(oauthToken: $_GET['oauth_token'], verifier: $_GET['oauth_verifier']),
+    new OAuthCallback(token: $_GET['oauth_token'], verifier: $_GET['oauth_verifier']),
 );
 ```
 
