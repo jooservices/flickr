@@ -24,7 +24,7 @@ permissions:
 jobs:
   actionlint:
     name: Actionlint
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
 
   zizmor:
     name: Zizmor
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload zizmor SARIF
         if: always() && hashFiles('zizmor.sarif') != ''
-        uses: github/codeql-action/upload-sarif@4c0873ef8656cb3c50b3f42fb63bc1ade0cfa827 # v4
+        uses: github/codeql-action/upload-sarif@6f530319d8c989665d0835536ec9571735fd2008 # v4
         with:
           sarif_file: zizmor.sarif
           category: zizmor

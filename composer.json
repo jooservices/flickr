@@ -17,6 +17,8 @@
         "psr/simple-cache": "^3.0"
     },
     "require-dev": {
+        "captainhook/captainhook": "^5.23",
+        "captainhook/plugin-composer": "^5.3",
         "friendsofphp/php-cs-fixer": "^3.65",
         "laravel/pint": "^1.18",
         "phpmd/phpmd": "^2.15",
@@ -56,10 +58,16 @@
         "lint:fix": ["@lint:pint:fix", "@lint:cs:fix"],
         "check": ["@validate-inner", "@verify:registry", "@verify:api-surface", "@lint", "@test"],
         "ci": ["@check", "@verify:smoke", "@test:coverage", "@coverage:check"],
-        "validate-inner": "composer validate --strict"
+        "validate-inner": "composer validate --strict",
+        "hooks:install": "captainhook install --force --skip-existing",
+        "post-install-cmd": "captainhook install --force --skip-existing",
+        "post-update-cmd": "captainhook install --force --skip-existing"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "captainhook/plugin-composer": true
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

@@ -1,4 +1,4 @@
-# Dedicated CI for jooservices/flickr — self-hosted runner1 (Linux X64)
+# Dedicated CI for jooservices/flickr — GitHub-hosted ubuntu-latest
 # Pull-request quality gate: full pipeline, including bot-safe coverage checks. Post-merge heads run ci-post-merge.yml.
 name: CI
 
@@ -18,7 +18,7 @@ permissions:
 jobs:
   validate:
     name: Validate
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
   verify:
     name: Verify (${{ matrix.name }})
     needs: [validate]
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: true
@@ -88,7 +88,7 @@ jobs:
   lint:
     name: Lint (${{ matrix.name }})
     needs: [verify]
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: true
@@ -132,7 +132,7 @@ jobs:
   security:
     name: Security (${{ matrix.name }})
     needs: [lint]
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: true
@@ -202,7 +202,7 @@ jobs:
   test:
     name: Test (${{ matrix.name }})
     needs: [lint]
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: true
@@ -253,7 +253,7 @@ jobs:
   coverage:
     name: Coverage upload
     needs: [test, security]
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
