@@ -3,7 +3,7 @@
 ## Ground rules
 
 1. `knowledge.md` is the design authority; `plan.md` orders delivery. Read both before proposing changes.
-2. Branch from `develop`; PR into `develop`. Conventional Commits only (`feat:`, `fix:`, ...).
+2. Branch from `develop`; PR into `develop`. Conventional Commits only (`feat:`, `fix:`, ...). Subject starts with an uppercase letter.
 3. All development runs in Docker:
 
 ```bash
@@ -11,6 +11,14 @@ make install   # build php:8.5 image + composer install
 make shell     # explore
 make ci        # validate + verify + lint + coverage(>=85%) + tests
 ```
+
+4. Install local git hooks after `make install` (CaptainHook via Docker). Never use `--no-verify`:
+
+```bash
+tools/install-git-hooks
+```
+
+Hooks enforce Conventional Commits (`commit-msg`), lint (`pre-commit`), and tests (`pre-push`).
 
 ## Generated code
 
