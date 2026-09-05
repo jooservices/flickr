@@ -93,4 +93,14 @@ final class SourceArchitectureTest extends TestCase
             self::assertStringNotContainsString('://up.flickr.com', $content, $file . ' must not hardcode Flickr upload hosts.');
         }
     }
+
+    public function testReadmeImportsResolveAgainstInstalledDependencies(): void
+    {
+        $readme = (string) file_get_contents(__DIR__ . '/../../README.md');
+        preg_match_all('/^use ([A-Za-z0-9_\\\\]+);$/m', $readme, $matches);
+        self::assertNotEmpty($matches[1]);
+        foreach ($matches[1] as $class) {
+            self::assertTrue(class_exists($class), 'Unresolvable README import: ' . $class);
+        }
+    }
 }

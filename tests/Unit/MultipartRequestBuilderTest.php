@@ -30,7 +30,6 @@ final class MultipartRequestBuilderTest extends TestCase
     public function testRejectsNonResourceFileHandle(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        // @phpstan-ignore argument.type (deliberately not a resource; asserts the runtime guard)
         $this->builder()->build('https://up.flickr.com/', [], 'photo', 'a.jpg', $this->notAResource());
     }
 
@@ -39,12 +38,13 @@ final class MultipartRequestBuilderTest extends TestCase
         return 'not-a-resource';
     }
 
-    public function testFieldValueCrlfCannotInjectAFakePart(): void
+    public function testMultilineFieldValuesPreserveSignedBytes(): void
     {
         $handle = $this->handle();
+        $value = \Faker\Factory::create()->sentence() . "\r\n" . \Faker\Factory::create()->sentence();
         $request = $this->builder()->build(
             'https://up.flickr.com/',
-            ['title' => "safe\r\n--forged-boundary\r\nContent-Disposition: form-data; name=\"admin\"\r\n\r\ntrue"],
+            ['description' => $value],
             'photo',
             'a.jpg',
             $handle,
@@ -52,8 +52,7 @@ final class MultipartRequestBuilderTest extends TestCase
 
         $body = (string) $request->getBody();
 
-        self::assertStringNotContainsString("\r\n--forged-boundary", $body);
-        self::assertStringContainsString('name="title"', $body);
+        self::assertStringContainsString("name=\"description\"\r\n\r\n" . $value . "\r\n", $body);
         fclose($handle);
     }
 

@@ -155,5 +155,14 @@ Force pushes and deletions are denied. Admins cannot bypass protection.
   scans the checked-out Git history with the MIT-licensed Gitleaks OSS CLI.
 - The coverage job uploads the merged report to Codecov and SonarQube. It
   normalizes a scheme-less `SONAR_HOST_URL` to `https://…` before scanning.
+  Sonar analysis waits for the quality gate for up to 300 seconds. A failed
+  gate fails the required `Coverage upload` job. Bot PRs must pass the same
+  Sonar gate; maintainers must provision the appropriate Dependabot secrets
+  or reproduce the change on a reviewed maintainer branch when secrets are
+  unavailable. Never execute untrusted PR code using `pull_request_target`.
+- `Validate commit messages` checks every PR commit's author and committer
+  against `Viet Vu <jooservices@gmail.com>`. Commitlint also validates merge
+  subjects instead of ignoring them. Existing historical violations are not
+  rewritten by this workflow.
 - Containers run as the runner user through `tools/ci/docker-compose`
   (`DOCKER_UID`/`DOCKER_GID`), so workspace files are never root-owned.

@@ -49,9 +49,7 @@ final class FlickrFactory
         ?FlickrCache $cache = null,
         ?Psr17Factories $psr17 = null,
     ): Flickr {
-        $redactor = new SensitiveDataRedactor();
-        $redactor->registerSecret($config->apiKey);
-        $redactor->registerSecret($config->apiSecret);
+        $redactor = new SensitiveDataRedactor([$config->apiKey, $config->apiSecret]);
 
         $psr17 ??= Psr17Factories::nyholm();
         $transport = new ClientV4Transport($http, $redactor);

@@ -248,7 +248,8 @@ final class UploadAndTicketsTest extends TestCase
 
     public function testFailedUploadSurfacesSafeErrorMetadataWithoutRetry(): void
     {
-        $this->tokens->put(new AccessTokenData('t', 's', AuthPermission::Write));
+        $faker = \Faker\Factory::create();
+        $this->tokens->put(new AccessTokenData($faker->sha256(), $faker->sha256(), AuthPermission::Write));
         $this->transport->queue(new RawResponseData(
             200,
             [],
@@ -370,6 +371,42 @@ final class UploadAndTicketsTest extends TestCase
         self::assertSame('p-a', $results[0]->photoId);
         self::assertSame(TicketStatus::Failed, $results[1]->status);
         self::assertSame([10], $sleeper->sleeps);
+    }
+
+    public function testPollerSurfacesApiOutagesWithoutInvalidatingTickets(): void
+    {
+        $faker = \Faker\Factory::create();
+        $this->tokens->put(new AccessTokenData($faker->sha256(), $faker->sha256(), AuthPermission::Read));
+        $this->transport->queue(new RawResponseData(200, [], json_encode([
+            'stat' => 'fail', 'code' => 105, 'message' => $faker->sentence(),
+        ], JSON_THROW_ON_ERROR)));
+        $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
+
+        try {
+            (new TicketPoller($this->service(), new \JOOservices\Flickr\Tests\Support\MutableClock(), $sleeper))->poll([$faker->uuid()]);
+            self::fail('Expected an API failure.');
+        } catch (\JOOservices\Flickr\Exceptions\ApiException $error) {
+            self::assertSame('105', $error->flickrCode);
+            self::assertSame([], $sleeper->sleeps);
+            self::assertSame(1, $this->transport->sentCount());
+        }
+    }
+
+    public function testPollerDoesNotSleepAfterARequestExhaustsItsDeadline(): void
+    {
+        $faker = \Faker\Factory::create();
+        $ticket = $faker->uuid();
+        $clock = self::createStub(\JOOservices\Flickr\Contracts\Clock::class);
+        // Start and first attempt precede a request that consumes two seconds.
+        $clock->method('now')->willReturn(0, 0, 2, 2);
+        $sleeper = new \JOOservices\Flickr\Tests\Support\RecordingSleeper();
+        $this->transport->queue(new RawResponseData(200, [], json_encode([
+            'stat' => 'ok', 'uploader' => ['ticket' => ['id' => $ticket, 'complete' => 0]],
+        ], JSON_THROW_ON_ERROR)));
+
+        $result = (new TicketPoller($this->service(), $clock, $sleeper))->poll([$ticket], 1000, 1000);
+        self::assertSame(TicketStatus::TimedOut, $result[0]->status);
+        self::assertSame([], $sleeper->sleeps);
     }
 
     public function testPollerTimesOutUnknownTickets(): void

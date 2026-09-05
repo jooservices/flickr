@@ -44,7 +44,6 @@ final class MultipartStreamTest extends TestCase
     public function testRejectsNonResourceFileHandle(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        // @phpstan-ignore argument.type (deliberately not a resource; asserts the runtime guard)
         new MultipartStream([], $this->notAResource(), '', '');
     }
 
@@ -70,6 +69,16 @@ final class MultipartStreamTest extends TestCase
     public function testToStringNeverThrows(): void
     {
         self::assertStringContainsString('FILEBYTES', (string) $this->stream());
+    }
+
+    public function testStringConversionRewindsAfterPartialAndCompleteReads(): void
+    {
+        $stream = $this->stream();
+        $expected = $stream->getContents();
+        self::assertSame($expected, (string) $stream);
+        $stream->rewind();
+        $stream->read(5);
+        self::assertSame($expected, (string) $stream);
     }
 
     public function testGetSizeMatchesActualContentLength(): void
@@ -193,12 +202,21 @@ final class MultipartStreamTest extends TestCase
         $stream->close();
 
         self::assertTrue($stream->eof());
-        self::assertSame('', $stream->getContents());
+        self::assertFalse($stream->isReadable());
+        self::assertFalse($stream->isSeekable());
+        self::assertNull($stream->getSize());
+        self::assertFalse(is_resource($this->handle));
+        self::assertSame('', (string) $stream);
+        $this->expectException(RuntimeException::class);
+        $stream->getContents();
     }
 
     public function testDetachReturnsNull(): void
     {
-        self::assertNull($this->stream()->detach());
+        $stream = $this->stream();
+        self::assertNull($stream->detach());
+        self::assertFalse($stream->isReadable());
+        self::assertTrue(is_resource($this->handle));
     }
 
     public function testGetMetadataReturnsEmptyArrayOrNull(): void

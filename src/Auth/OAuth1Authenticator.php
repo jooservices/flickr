@@ -6,6 +6,7 @@ namespace JOOservices\Flickr\Auth;
 
 use JOOservices\Client\Dto\RequestOptions;
 use JOOservices\Flickr\Client\FlickrRequestBuilder;
+use JOOservices\Flickr\Client\FlickrResponseParser;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\Config\FlickrEndpoints;
 use JOOservices\Flickr\Contracts\Clock;
@@ -15,6 +16,8 @@ use InvalidArgumentException;
 use JOOservices\Flickr\Enums\AuthPermission;
 use JOOservices\Flickr\Enums\HttpMethod;
 use JOOservices\Flickr\Exceptions\AuthenticationException;
+use JOOservices\Flickr\Exceptions\RateLimitException;
+use JOOservices\Flickr\Dtos\Common\RawResponseData;
 use JOOservices\Flickr\Support\QueryString;
 
 /**
@@ -56,7 +59,7 @@ final class OAuth1Authenticator
             new RequestOptions(allowRedirects: false),
         );
 
-        $fields = QueryString::parseForm($response->body);
+        $fields = $this->tokenFields($response);
 
         if (($fields['oauth_callback_confirmed'] ?? null) !== 'true') {
             throw new AuthenticationException('Flickr did not confirm the OAuth callback.');
@@ -104,7 +107,7 @@ final class OAuth1Authenticator
             new RequestOptions(allowRedirects: false),
         );
 
-        $fields = QueryString::parseForm($response->body);
+        $fields = $this->tokenFields($response);
         $token = $this->requiredField($fields, 'oauth_token');
         $secret = $this->requiredField($fields, 'oauth_token_secret');
 
@@ -112,6 +115,22 @@ final class OAuth1Authenticator
         $this->tokens->put($accessToken);
 
         return $accessToken;
+    }
+
+    /**
+     * @return array<string, string|list<string>>
+     */
+    private function tokenFields(RawResponseData $response): array
+    {
+        if ($response->status === 429) {
+            throw new RateLimitException('Flickr OAuth rate limit reached.', FlickrResponseParser::retryAfterSeconds($response));
+        }
+
+        if ($response->status < 200 || $response->status >= 300) {
+            throw new AuthenticationException(sprintf('Flickr OAuth returned HTTP %d.', $response->status));
+        }
+
+        return QueryString::parseForm($response->body);
     }
 
     /**

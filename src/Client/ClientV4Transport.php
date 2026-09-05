@@ -53,7 +53,7 @@ final class ClientV4Transport implements FlickrTransport
         try {
             $psrResponse = $this->client->send($request, $options);
         } catch (DownloadSizeExceededException $error) {
-            throw new TransportException('Flickr response exceeded the allowed body size.', previous: $error);
+            throw new TransportException('Flickr response exceeded the allowed body size.', previous: $this->safePrevious($error));
         } catch (\JOOservices\Client\Exceptions\InvalidConfigurationException $error) {
             throw $error;
         } catch (\Throwable $error) {

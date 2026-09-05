@@ -102,6 +102,12 @@ final class SupportTest extends TestCase
         self::assertSame('has [redacted] here', $redactor->redactText('has super-secret-value here'));
     }
 
+    public function testCacheKeyRejectsInvalidUtf8InsteadOfColliding(): void
+    {
+        $this->expectException(\JsonException::class);
+        CacheKeyResolver::key('flickr.photos.search', ['text' => \Faker\Factory::create()->word() . "\xFF"]);
+    }
+
     public function testRedactorCapsTrackedSecretsSoALongLivedInstanceCannotGrowUnbounded(): void
     {
         $redactor = new SensitiveDataRedactor();

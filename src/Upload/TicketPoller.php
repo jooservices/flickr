@@ -7,6 +7,7 @@ namespace JOOservices\Flickr\Upload;
 use InvalidArgumentException;
 use JOOservices\Flickr\Contracts\Clock;
 use JOOservices\Flickr\Contracts\Sleeper;
+use JOOservices\Flickr\Client\FlickrErrorCodeMap;
 
 /**
  * Bounded ticket poller with injected clock/sleeper. Callers must not run it
@@ -45,7 +46,10 @@ final class TicketPoller
             $pending = $this->collectResolved($pending, $remote, $results);
 
             if ($pending !== [] && $attempts < $maxAttempts) {
-                $this->sleeper->sleep($intervalMilliseconds);
+                $remainingMs = max(0, ($deadline - $this->clock->now()) * 1000);
+                if ($remainingMs > 0) {
+                    $this->sleeper->sleep(min($intervalMilliseconds, $remainingMs));
+                }
             }
         }
 
@@ -66,6 +70,11 @@ final class TicketPoller
     private function fetchRemoteTickets(array $ticketIds): array
     {
         $response = $this->uploads->checkTickets($ticketIds);
+        if ($response->ok === false) {
+            assert($response->error !== null);
+            throw FlickrErrorCodeMap::throwFor($response->error);
+        }
+
         $tickets = $response->listAt('uploader', 'ticket');
 
         if ($tickets === []) {
