@@ -3,11 +3,12 @@
 Thank you for using `jooservices/flickr`. Here is where to get help.
 
 > [!NOTE]
-> This package is a **full rebuild** (`v4.0.0`) with **no backward compatibility** with `v2.x`. Questions about the archived previous implementation are out of scope for this repository.
+> The current line is **`4.1.x`**. The v4 line began at `v4.0.0` as a full rebuild, with **no backward compatibility** with `v2.x`. Questions about the archived previous implementation are out of scope for this repository.
 
 ## Documentation
 
 - [README](README.md) — requirements, installation, quick start, design contract, development workflow
+- [API index](docs/api-index.md) — generated catalog of the 224-method REST surface
 - [Changelog](CHANGELOG.md) — what changed in each version of the rebuild
 - [Contributing](CONTRIBUTING.md) — how to set up the project and open PRs
 
