@@ -32,7 +32,7 @@ final class MultipartStream implements StreamInterface
 
     /**
      * @param list<string> $fieldParts
-     * @param resource $fileHandle
+     * @param mixed $fileHandle validated as an open stream resource
      */
     public function __construct(array $fieldParts, mixed $fileHandle, string $filePrefix, string $closingBoundary)
     {
@@ -60,6 +60,10 @@ final class MultipartStream implements StreamInterface
     public function __toString(): string
     {
         try {
+            if ($this->isSeekable()) {
+                $this->rewind();
+            }
+
             return $this->getContents();
         } catch (\Throwable) {
             return '';
@@ -68,26 +72,33 @@ final class MultipartStream implements StreamInterface
 
     public function close(): void
     {
-        $this->parts = [];
-        $this->buffer = '';
-        $this->part = 0;
-        $this->partCount = 0;
+        foreach ($this->parts as $part) {
+            if (is_resource($part)) {
+                fclose($part);
+            }
+        }
+        $this->detach();
     }
 
     public function detach(): mixed
     {
-        $this->close();
+        $this->parts = [];
+        $this->buffer = '';
+        $this->part = 0;
+        $this->partCount = 0;
+        $this->position = 0;
 
         return null;
     }
 
     public function getSize(): ?int
     {
-        return $this->seekable ? $this->size : null;
+        return $this->isSeekable() ? $this->size : null;
     }
 
     public function tell(): int
     {
+        $this->assertOpen();
         return $this->position;
     }
 
@@ -98,12 +109,12 @@ final class MultipartStream implements StreamInterface
 
     public function isSeekable(): bool
     {
-        return $this->seekable;
+        return $this->isReadable() && $this->seekable;
     }
 
     public function seek($offset, $whence = SEEK_SET): void
     {
-        if ($this->seekable === false) {
+        if ($this->isSeekable() === false) {
             throw new RuntimeException('Multipart upload stream is not seekable.');
         }
 
@@ -150,11 +161,12 @@ final class MultipartStream implements StreamInterface
 
     public function isReadable(): bool
     {
-        return true;
+        return $this->partCount > 0;
     }
 
     public function read($length): string
     {
+        $this->assertOpen();
         if ($length < 0) {
             throw new InvalidArgumentException('Read length must be a non-negative integer.');
         }
@@ -196,6 +208,7 @@ final class MultipartStream implements StreamInterface
 
     public function getContents(): string
     {
+        $this->assertOpen();
         $contents = '';
 
         while ($this->eof() === false) {
@@ -221,5 +234,12 @@ final class MultipartStream implements StreamInterface
         $this->part = 0;
         $this->buffer = '';
         $this->position = 0;
+    }
+
+    private function assertOpen(): void
+    {
+        if (!$this->isReadable()) {
+            throw new RuntimeException('Multipart upload stream is closed or detached.');
+        }
     }
 }

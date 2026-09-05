@@ -16,9 +16,9 @@ final class CacheKeyResolver
      */
     public static function key(string $method, array $parameters): string
     {
-        return self::VERSION_PREFIX . hash('sha256', $method . "\x1F" . (string) json_encode(
+        return self::VERSION_PREFIX . hash('sha256', $method . "\x1F" . json_encode(
             self::sortRecursive($parameters),
-            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
         ));
     }
 

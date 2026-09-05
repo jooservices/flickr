@@ -130,7 +130,9 @@ final class UploadService
                 previous: new UploadException(sprintf('%s: %s', $error::class, $this->redactor->redactText($error->getMessage()))),
             );
         } finally {
-            fclose($handle);
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
         }
 
         $outcome = $this->parser->parseUploadXml($response);

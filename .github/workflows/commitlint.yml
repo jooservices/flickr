@@ -24,6 +24,21 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Validate PR commit identities
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          expected='Viet Vu <jooservices@gmail.com>'
+          git log --format='%H%x09%an <%ae>%x09%cn <%ce>' "${BASE_SHA}..${HEAD_SHA}" |
+            while IFS=$'\t' read -r commit author committer; do
+              if [[ "${author}" != "${expected}" || "${committer}" != "${expected}" ]]; then
+                echo "Commit ${commit} violates the required author/committer identity."
+                exit 1
+              fi
+            done
+
       - name: Validate PR commits
         uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
         with:

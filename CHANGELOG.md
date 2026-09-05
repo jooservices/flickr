@@ -5,6 +5,22 @@ All notable changes are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve multiline upload fields exactly as signed and rewind multipart string conversion; close/detach now expose the correct stream state.
+- Retain configured credentials during redactor eviction, refresh active secrets, and redact OAuth verifiers and JSON/XML error messages.
+- Reject invalid UTF-8 cache-key input instead of hashing failed serialization.
+- Reject failed OAuth HTTP responses before trusting token fields; preserve rate-limit retry metadata.
+- Surface ticket API failures and avoid sleeping after a request consumes the poll deadline.
+- Verify all generated API files without silently overwriting drift.
+- Correct README client imports and constrain supported PHP versions to `^8.5`.
+
+### Changed
+
+- Sonar quality-gate completion is required in CI, including bot changes.
+- PR commit checks enforce author/committer identity and validate merge subjects.
+- Add Faker-backed security regressions and generator drift tests; remove the two PHPStan argument ignores by accurately typing validated input boundaries.
+
 ## [4.1.0] - 2026-08-28
 
 ### Fixed

@@ -2,7 +2,7 @@
 
 This file adds project-only rules.
 
-- PHP `>= 8.5`; runtime: `jooservices/client ^4.0`, `jooservices/dto ^3.0`, Nyholm PSR-7
+- PHP `^8.5`; runtime: `jooservices/client ^4.0`, `jooservices/dto ^3.0`, Nyholm PSR-7
 - First public line: **`v4.0.0`**; current line: **`v4.1.0`** — no backward compatibility with v2
 - All PHP tooling via Docker (`php:8.5-cli-bookworm`, image `jooservices/flickr:php85`)
 - CI on GitHub-hosted `ubuntu-latest` via `tools/ci/docker-compose`

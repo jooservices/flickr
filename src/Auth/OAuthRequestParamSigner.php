@@ -61,6 +61,12 @@ final class OAuthRequestParamSigner
             $this->redactor->registerSecret($tokenSecret);
         }
 
+        foreach (['oauth_verifier', 'oauth_token_secret'] as $sensitiveParameter) {
+            foreach ((array) ($requestParameters[$sensitiveParameter] ?? []) as $value) {
+                $this->registerSecretAndEncodedForm($value);
+            }
+        }
+
         $all = [...$requestParameters, ...$oauth];
         $baseString = $this->baseStrings->build($verb, $uri, $all);
         $signature = $this->signer->sign(

@@ -26,7 +26,7 @@ client v4 transport instead.
 ## Quick start
 
 ```php
-use JOOservices\Client\ClientBuilder;
+use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Dtos\Photos\SearchPhotosData;
@@ -127,7 +127,7 @@ fabricated from a broken backend.
 ## Testing without network
 
 ```php
-use JOOservices\Client\ClientBuilder;
+use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Flickr\Config\FlickrConfig;
 use JOOservices\Flickr\FlickrFactory;
 use JOOservices\Flickr\Testing\FlickrFake;

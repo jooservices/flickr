@@ -19,7 +19,7 @@ final class MultipartRequestBuilder
 
     /**
      * @param array<string, string|list<string>> $fields all OAuth-signed non-file fields
-     * @param resource $fileHandle
+     * @param mixed $fileHandle validated as an open stream resource
      */
     public function build(
         string $uri,
@@ -59,7 +59,7 @@ final class MultipartRequestBuilder
                 $parts[] = sprintf(
                     "--{$boundary}\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
                     $this->escape($name),
-                    $this->escapeValue($single),
+                    $single,
                 );
             }
         }
@@ -84,15 +84,5 @@ final class MultipartRequestBuilder
     private function escape(string $value): string
     {
         return str_replace(['"', "\\", "\r", "\n"], '', $value);
-    }
-
-    /**
-     * Field values (unlike quoted header attributes) may legitimately
-     * contain quotes and backslashes; only bare CR/LF must be stripped so a
-     * value cannot inject a fake part boundary into the body.
-     */
-    private function escapeValue(string $value): string
-    {
-        return str_replace(["\r", "\n"], '', $value);
     }
 }

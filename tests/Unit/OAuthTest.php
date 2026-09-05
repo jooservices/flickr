@@ -153,6 +153,46 @@ final class OAuthTest extends TestCase
         self::assertArrayHasKey('oauth_signature', $dispatched);
     }
 
+    public function testBeginRejectsTokenFieldsFromHttpFailure(): void
+    {
+        $faker = \Faker\Factory::create();
+        $this->transport->queue(new RawResponseData(500, [], QueryString::build([
+            'oauth_callback_confirmed' => 'true',
+            'oauth_token' => $faker->sha256(),
+            'oauth_token_secret' => $faker->sha256(),
+        ])));
+        $this->expectException(AuthenticationException::class);
+        $this->authenticator()->begin(AuthPermission::Read);
+    }
+
+    public function testOAuthRateLimitPreservesRetryAfter(): void
+    {
+        $seconds = \Faker\Factory::create()->numberBetween(1, 120);
+        $this->transport->queue(new RawResponseData(429, ['retry-after' => [(string) $seconds]], ''));
+        try {
+            $this->authenticator()->begin(AuthPermission::Read);
+            self::fail('Expected a rate limit failure.');
+        } catch (\JOOservices\Flickr\Exceptions\RateLimitException $error) {
+            self::assertSame($seconds, $error->retryAfterSeconds);
+        }
+    }
+
+    public function testCompleteRejectsHttpFailureWithoutChangingStoredToken(): void
+    {
+        $faker = \Faker\Factory::create();
+        $pending = new PendingAuthorization($faker->sha256(), $faker->sha256(), AuthPermission::Read, $this->clock->now(), $faker->url());
+        $this->transport->queue(new RawResponseData(500, [], QueryString::build([
+            'oauth_token' => $faker->sha256(),
+            'oauth_token_secret' => $faker->sha256(),
+        ])));
+        try {
+            $this->authenticator()->complete($pending, new OAuthCallback($pending->requestToken, $faker->sha256()));
+            self::fail('Expected an authentication failure.');
+        } catch (AuthenticationException) {
+            self::assertNull($this->tokens->get());
+        }
+    }
+
     public function testBeginUsesConfiguredCallbackUrl(): void
     {
         $this->transport->queue(new RawResponseData(

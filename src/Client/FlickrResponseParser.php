@@ -53,8 +53,8 @@ final class FlickrResponseParser
                 false,
                 [],
                 new ApiErrorData(
-                    self::scalarToString($decoded['code'] ?? 'unknown'),
-                    self::scalarToString($decoded['message'] ?? 'Unknown Flickr error'),
+                    $this->redactor->redactText(self::scalarToString($decoded['code'] ?? 'unknown')),
+                    $this->redactor->redactText(self::scalarToString($decoded['message'] ?? 'Unknown Flickr error')),
                 ),
             );
         }
@@ -117,7 +117,7 @@ final class FlickrResponseParser
         }
 
         if ($stat !== 'ok') {
-            throw self::uploadFailure($xml);
+            throw $this->uploadFailure($xml);
         }
 
         return self::extractOutcome($xml);
@@ -155,7 +155,7 @@ final class FlickrResponseParser
         return $xml;
     }
 
-    private static function uploadFailure(SimpleXMLElement $xml): UploadException
+    private function uploadFailure(SimpleXMLElement $xml): UploadException
     {
         $meta = [];
         $errorAttributes = ($xml->err ?? null)?->attributes();
@@ -166,14 +166,14 @@ final class FlickrResponseParser
             }
         }
 
-        return new UploadException(sprintf(
+        return new UploadException($this->redactor->redactText(sprintf(
             'Flickr upload failed (%s).',
             implode(', ', array_map(
                 static fn(string $key, string $value): string => $key . '=' . $value,
                 array_keys($meta),
                 $meta,
             )),
-        ));
+        )));
     }
 
     /**

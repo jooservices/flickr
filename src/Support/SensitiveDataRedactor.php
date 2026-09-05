@@ -44,18 +44,20 @@ final class SensitiveDataRedactor
      */
     private array $secretValues = [];
 
+    /** @param list<string> $credentials configuration secrets retained for this client's lifetime */
+    public function __construct(private readonly array $credentials = [])
+    {
+    }
+
     public function registerSecret(string $value): void
     {
-        if (strlen($value) < 6) {
+        if ($value === '') {
             return;
         }
 
         $key = "\0" . $value;
 
-        if (isset($this->secretValues[$key])) {
-            return;
-        }
-
+        unset($this->secretValues[$key]);
         $this->secretValues[$key] = $value;
 
         if (count($this->secretValues) > self::MAX_TRACKED_SECRETS) {
@@ -65,11 +67,15 @@ final class SensitiveDataRedactor
 
     public function redactText(string $text): string
     {
-        foreach ($this->secretValues as $secret) {
-            $text = str_replace($secret, '[redacted]', $text);
+        $replacements = [];
+        foreach ([...$this->secretValues, ...$this->credentials] as $secret) {
+            if ($secret !== '') {
+                $replacements[$secret] = '[redacted]';
+                $replacements[rawurlencode($secret)] = '[redacted]';
+            }
         }
 
-        return $text;
+        return strtr($text, $replacements);
     }
 
     /**

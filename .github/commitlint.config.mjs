@@ -1,6 +1,6 @@
 /** @type {import('@commitlint/types').UserConfig} */
 export default {
-    defaultIgnores: true,
+    defaultIgnores: false,
     rules: {
         'header-max-length': [2, 'always', 120],
         'header-min-length': [2, 'always', 10],

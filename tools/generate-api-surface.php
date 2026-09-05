@@ -7,6 +7,8 @@ use JOOservices\Flickr\Metadata\FlickrMethodRegistry;
 require __DIR__ . '/../vendor/autoload.php';
 
 $root = dirname(__DIR__);
+$verifyOnly = in_array('--check', $argv ?? [], true);
+$outputs = [];
 $registry = new FlickrMethodRegistry();
 /** @var array<string, mixed> $surface */
 $surface = require $root . '/resources/api-surface.php';
@@ -147,7 +149,7 @@ if ($coverage !== $registryNames) {
 /**
  * @param array<string, string> $wrappers
  */
-function emitApiService(string $root, string $accessor, string $class, array $wrappers): void
+function renderApiService(string $class, array $wrappers): string
 {
     $lines = [
         '<?php',
@@ -182,12 +184,12 @@ function emitApiService(string $root, string $accessor, string $class, array $wr
     $lines[] = '}';
     $lines[] = '';
 
-    file_put_contents($root . '/src/Services/' . $class . '.php', implode("\n", $lines));
+    return implode("\n", $lines);
 }
 
 foreach ($services as $accessor => $service) {
     if ($service['hand_written'] === false) {
-        emitApiService($root, $accessor, $service['class'], $service['wrappers']);
+        $outputs['src/Services/' . $service['class'] . '.php'] = renderApiService($service['class'], $service['wrappers']);
     }
 }
 
@@ -272,7 +274,7 @@ $flickr = [
     '',
 ];
 
-file_put_contents($root . '/src/Flickr.php', implode("\n", $flickr));
+$outputs['src/Flickr.php'] = implode("\n", $flickr);
 
 $index = ["# Flickr SDK v4 API index", '', 'Generated from resources/method-registry.php + resources/api-surface.php.', ''];
 
@@ -297,11 +299,33 @@ foreach ($services as $accessor => $service) {
     $index[] = '';
 }
 
-@mkdir($root . '/docs', 0777, true);
-file_put_contents($root . '/docs/api-index.md', implode("\n", $index));
+$outputs['docs/api-index.md'] = implode("\n", $index);
+$stale = [];
+foreach ($outputs as $relativePath => $content) {
+    $path = $root . '/' . $relativePath;
+    if ($verifyOnly) {
+        if (!is_file($path) || file_get_contents($path) !== $content) {
+            $stale[] = $relativePath;
+        }
+        continue;
+    }
+
+    if (!is_dir(dirname($path))) {
+        mkdir(dirname($path), 0755, true);
+    }
+    if (file_put_contents($path, $content) === false) {
+        throw new RuntimeException('Unable to write ' . $relativePath);
+    }
+}
+
+if ($stale !== []) {
+    fwrite(STDERR, "Generated files are stale: " . implode(', ', $stale) . ". Run: composer generate:api-index\n");
+    exit(1);
+}
 
 echo sprintf(
-    "Generated %d generated service classes (+%d hand-written), facade, api-index for %d methods.\n",
+    "%s %d generated service classes (+%d hand-written), facade, api-index for %d methods.\n",
+    $verifyOnly ? 'Verified' : 'Generated',
     count(array_filter($services, static fn($s): bool => $s['hand_written'] === false)),
     count(array_filter($services, static fn($s): bool => $s['hand_written'] === true)),
     count($registryNames),
