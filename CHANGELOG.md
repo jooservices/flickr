@@ -7,7 +7,7 @@ All notable changes are documented here. Format follows
 
 ### Removed
 
-- Drop shipped rebuild planning docs (`knowledge.md`, `plan.md`, `implementation.md`) and the temporary `docs/audit-remediation.md` note; contributors use README and AGENTS.md.
+- Remove obsolete rebuild planning docs (`knowledge.md`, `plan.md`, `implementation.md`) and the temporary `docs/audit-remediation.md` note; contributors use README and AGENTS.md.
 
 ### Fixed
 

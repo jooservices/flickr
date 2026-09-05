@@ -3,7 +3,7 @@
 Thank you for using `jooservices/flickr`. Here is where to get help.
 
 > [!NOTE]
-> The current line is **`4.1.x`** (started at `v4.0.0` as a full rebuild) with **no backward compatibility** with `v2.x`. Questions about the archived previous implementation are out of scope for this repository.
+> The current line is **`4.1.x`**. The v4 line began at `v4.0.0` as a full rebuild, with **no backward compatibility** with `v2.x`. Questions about the archived previous implementation are out of scope for this repository.
 
 ## Documentation
 
