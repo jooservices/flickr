@@ -206,7 +206,8 @@ make ci           # validate + verify + lint + coverage(>=85%) + smoke
 ```
 
 Real-network tests require explicit `FLICKR_REAL_TESTS=1` plus credentials and never run destructive
-operations without disposable-account approval. Generated sources live under `resources/` +
+operations without disposable-account approval. The generated method catalog is
+[`docs/api-index.md`](docs/api-index.md). Generated sources live under `resources/` +
 `tools/generate-api-surface.php`; regenerate with `composer generate:api-index` and commit the diff.
 
 ## License

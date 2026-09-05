@@ -5,6 +5,10 @@ All notable changes are documented here. Format follows
 
 ## [Unreleased]
 
+### Removed
+
+- Drop shipped rebuild planning docs (`knowledge.md`, `plan.md`, `implementation.md`) and the temporary `docs/audit-remediation.md` note; contributors use README and AGENTS.md.
+
 ### Fixed
 
 - Preserve multiline upload fields exactly as signed and rewind multipart string conversion; close/detach now expose the correct stream state.

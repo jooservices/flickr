@@ -2,7 +2,7 @@
 
 ## Ground rules
 
-1. `knowledge.md` is the design authority; `plan.md` orders delivery. Read both before proposing changes.
+1. Read [`README.md`](README.md) and [`AGENTS.md`](AGENTS.md) before proposing changes. Architecture and scope live there — not in archived rebuild specs.
 2. Branch from `develop`; PR into `develop`. Conventional Commits only (`feat:`, `fix:`, ...). Subject starts with an uppercase letter.
 3. All development runs in Docker:
 
