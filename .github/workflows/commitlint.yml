@@ -17,6 +17,8 @@ jobs:
     name: Validate commit messages
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      DEPENDABOT_PR: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -25,6 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate PR commit identities
+        if: env.DEPENDABOT_PR != 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -38,6 +41,43 @@ jobs:
                 exit 1
               fi
             done
+
+      - name: Reject mixed-authorship Dependabot PR
+        if: env.DEPENDABOT_PR == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              per_page: 100,
+            });
+
+            if (commits.length !== pullRequest.commits) {
+              core.setFailed(
+                `Could not validate all Dependabot commits: expected ${pullRequest.commits}, fetched ${commits.length}.`,
+              );
+              return;
+            }
+
+            const invalidCommits = commits.filter(
+              ({ author }) => author?.login !== 'dependabot[bot]',
+            );
+
+            if (invalidCommits.length > 0) {
+              const details = invalidCommits
+                .map(({ sha, author }) => `${sha.slice(0, 7)} (${author?.login ?? 'unknown'})`)
+                .join(', ');
+              core.setFailed(
+                `Dependabot PRs must contain only Dependabot-authored commits: ${details}`,
+              );
+            }
 
       - name: Validate PR commits
         uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
