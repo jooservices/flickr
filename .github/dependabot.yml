@@ -10,7 +10,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "composer"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -30,7 +29,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "github-actions"
+      - "ci/cd"
     commit-message:
       prefix: "ci"
       include: "scope"
