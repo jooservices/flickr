@@ -7,7 +7,8 @@ docker compose run --rm --no-deps php vendor/bin/captainhook install --force --s
 
 for hook in .git/hooks/*; do
     if [ -f "$hook" ] && grep -q 'vendor/bin/captainhook' "$hook" 2>/dev/null; then
-        sed -i '' 's|vendor/bin/captainhook|tools/run-captainhook|g' "$hook"
+        sed -i.bak 's|vendor/bin/captainhook|tools/run-captainhook|g' "$hook"
+        rm -f "$hook.bak"
     fi
 done
 
